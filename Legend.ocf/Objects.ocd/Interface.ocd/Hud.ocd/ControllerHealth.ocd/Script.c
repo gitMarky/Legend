@@ -51,6 +51,7 @@ private func Construction()
 	}
 
 	AddTimer(this.UpdateHealth, 1);
+	CreateEffect(FxHeartBeat, 1, 1);
 
 	return _inherited(...);
 }
@@ -76,9 +77,9 @@ private func AssembleHeartSymbol(int index)
 		Bottom = ToEmString(GUI_HEALTH_HEART_SIZE_EM),
 		ID = GetHeartID(index),
 		Priority = 1 + index,
+		Style = GUI_NoCrop,
 		// additional icons
 		scaled = { // scaleable subwindow
-			Style = GUI_NoCrop,
 			empty = {
 				Symbol = Icon_HealthHeart,
 				Priority = 10,
@@ -95,17 +96,6 @@ private func AssembleHeartSymbol(int index)
 			},
 		},
 	};
-	
-	/*
-	var size = 750;
-	var scale = {
-		Prototype = GUI_BoxLayout,
-		Align = {X = GUI_AlignCenter, Y = GUI_AlignCenter},
-		Width = size, Height = size,
-	};
-	
-	AddProperties(heart.scaled, GuiCalculateBoxElementPosition(scale));
-	*/
 	return heart;
 }
 
@@ -122,7 +112,6 @@ private func GetHeartID(int index)
 private func UpdateHealth()
 {
 	var crew = GetCursor(GetOwner());
-	if (!crew) return;
 
 	if (GuiShowForCrew(gui_health, GetOwner(), crew))
 	{
@@ -183,17 +172,23 @@ local FxFillHearts = new Effect
 
 private func DisplayHearts(int health, int health_max, int health_old)
 {
+	// beating heart effect
+	gui_health.heart_beating = Max(0, (health - 1) - ((health - 1) % GUI_HEALTH_PER_HEART)) / GUI_HEALTH_PER_HEART;
+
+	// update
 	for (var heart = 0; heart < GUI_HEALTH_MAX_HEARTS; ++heart)
 	{
 		var heart_offset = GUI_HEALTH_PER_HEART * heart;
 		var relative_health = BoundBy(health - heart_offset, 0, GUI_HEALTH_PER_HEART);
 		
-		var update = {Player = NO_OWNER, scaled = {filled = {}}};
+		var update = {Player = NO_OWNER, scaled = {}};
+		
+		if (heart != gui_health.heart_beating) update.scaled = ScaleHeart();
 
 		if (health_max >= (heart_offset + GUI_HEALTH_PER_HEART)) // display
 		{
 			update.Player = GetOwner();
-			update.scaled.filled.GraphicsName = Format("%d", relative_health);
+			update.scaled.filled = {GraphicsName = Format("%d", relative_health)};
 		}
 		
 		GuiUpdate(update, gui_health.ID, GetHeartID(heart));
@@ -228,6 +223,35 @@ private func ResetHearts(object crew)
 		DisplayHearts(health, health_max);
 	}
 }
+
+
+private func ScaleHeart(int size)
+{
+	size = size ?? 1000;
+	
+	var scale = {
+		Prototype = GUI_BoxLayout,
+		Align = {X = GUI_AlignCenter, Y = GUI_AlignCenter},
+		Width = size, Height = size,
+	};
+	return GuiCalculateBoxElementPosition(scale);
+}
+
+
+local FxHeartBeat = new Effect
+{
+	Timer = func (int time)
+	{
+		if (Target.gui_health.displayed)
+		{
+			var size = 1100 + Cos(time * 5, 200);
+			
+			var update = {scaled = Target->ScaleHeart(size)};
+			
+			Target->GuiUpdate(update, Target.gui_health.ID, Target->GetHeartID(Target.gui_health.heart_beating));
+		}
+	},
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
