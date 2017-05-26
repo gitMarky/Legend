@@ -9,7 +9,7 @@ local gui_health;
 static const GUI_HEALTH_MARGIN_LEFT_EM = 5;
 static const GUI_HEALTH_MARGIN_TOP_EM = 5;
 
-static const GUI_HEALTH_HEART_SIZE_EM = 10;
+static const GUI_HEALTH_HEART_SIZE_EM = 12;
 static const GUI_HEALTH_MAX_HEARTS = 20; // this many hearts total
 static const GUI_HEALTH_ROW_HEARTS = 10; // this many hearts per row
 static const GUI_HEALTH_PER_HEART = 4; // this many health points per heart
@@ -80,17 +80,23 @@ private func AssembleHeartSymbol(int index)
 		scaled = { // scaleable subwindow
 			Style = GUI_NoCrop,
 			empty = {
-				Symbol = Icon_Heart,
-				GraphicsName = "Broken",
-				Priority = 11,
+				Symbol = Icon_HealthHeart,
+				Priority = 10,
 			},
 			filled = {
-				Symbol = Icon_Heart,
+				Symbol = Icon_HealthHeart,
+				GraphicsName = "0", // no filling by default
+				Priority = 11,
+			},
+			double = {
+				Symbol = Icon_HealthHeart,
+				GraphicsName = "0", // hidden by default
 				Priority = 12,
 			},
 		},
 	};
 	
+	/*
 	var size = 750;
 	var scale = {
 		Prototype = GUI_BoxLayout,
@@ -99,6 +105,7 @@ private func AssembleHeartSymbol(int index)
 	};
 	
 	AddProperties(heart.scaled, GuiCalculateBoxElementPosition(scale));
+	*/
 	return heart;
 }
 
@@ -141,6 +148,7 @@ private func DisplayHearts(int health, int health_max)
 		if (health_max >= (heart_offset + GUI_HEALTH_PER_HEART)) // display
 		{
 			update.Player = GetOwner();
+			update.scaled.filled.GraphicsName = Format("%d", relative_health);
 		}
 		
 		GuiUpdate(update, gui_health.ID, GetHeartID(heart));
