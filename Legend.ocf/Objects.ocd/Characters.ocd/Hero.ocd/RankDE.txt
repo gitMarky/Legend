@@ -1,0 +1,28 @@
+Clonk
+Fähnrich
+Leutnant
+Hauptmann
+Major
+Oberst
+Brigadegeneral
+Generalmajor
+Generalleutnant
+General
+Feldmarschall
+Kadett
+Fregattenkapitän
+Kapitän
+Konteradmiral
+Vizeadmiral
+Admiral
+Großadmiral
+Staatsrat
+Staatssekretär
+Kanzler
+Vizepräsident
+Präsident
+Ministerpräsident
+*%s Erster Klasse
+*%s Zweiten Grades
+*%s ohne Gleichen
+*Erhabener %s

@@ -1,0 +1,45 @@
+material ua_clonk
+{
+    receive_shadows on 
+
+    technique
+    {
+        pass material
+        {
+		    cull_hardware none
+            scene_blend alpha_blend
+		
+            ambient 1.0 1.0 1.0 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.5 0.5 0.5 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit 
+            {
+                texture skin_m_soldier_body.jpg
+                tex_address_mode wrap
+                scale 1.0 1.0
+                colour_op modulate
+            }
+        }
+    }
+}
+
+material ua_clonk_invisible
+{
+    receive_shadows on 
+
+    technique
+    {
+        pass material
+        {
+		    cull_hardware none
+            scene_blend alpha_blend
+		
+            ambient 1.0 1.0 1.0 0.0
+            diffuse 1.0 1.0 1.0 0.0
+            specular 0.5 0.5 0.5 0.0 12.5
+            emissive 0.0 0.0 0.0 0.0
+        }
+    }
+}
