@@ -1,67 +1,58 @@
 
-/* Creation / Destruction */
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Properties
 
 local gui_health;
 
+
+static const GUI_HEALTH_MARGIN_LEFT_EM = 5;
+static const GUI_HEALTH_MARGIN_TOP_EM = 5;
+
+static const GUI_HEALTH_HEART_SIZE_EM = 10;
+static const GUI_HEALTH_MAX_HEARTS = 20; // this many hearts total
+static const GUI_HEALTH_ROW_HEARTS = 10; // this many hearts per row
+static const GUI_HEALTH_PER_HEART = 4; // this many health points per heart
+
+static const GUI_HEALTH_GRID_WIDTH =  GUI_HEALTH_HEART_SIZE_EM * GUI_HEALTH_ROW_HEARTS;
+static const GUI_HEALTH_GRID_HEIGHT = GUI_HEALTH_HEART_SIZE_EM * GUI_HEALTH_MAX_HEARTS / GUI_HEALTH_ROW_HEARTS;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Construction / Destruction
+
 private func Construction()
 {
+	// define GUI
+
 	gui_health = {};
-	
-	var max_hearts = 20;
-	var row_hearts = 10;
-	var heart_size = 10;
-	var grid_width =  heart_size * row_hearts;
-	var grid_height = heart_size * max_hearts / row_hearts;
-	
 	gui_health.layout =
 	{
 		Target = this,
 		Player = GetOwner(),
 		Style = GUI_Multiple | GUI_TightGridLayout,
-		Right = ToEmString(grid_width),
-		Bottom = ToEmString(grid_height),
+		Left = ToEmString(GUI_HEALTH_MARGIN_LEFT_EM),
+		Top = ToEmString(GUI_HEALTH_MARGIN_TOP_EM),
+		Right = Format("%s%s", ToEmString(GUI_HEALTH_MARGIN_LEFT_EM), ToEmString(GUI_HEALTH_GRID_WIDTH)),
+		Bottom = Format("%s%s", ToEmString(GUI_HEALTH_MARGIN_TOP_EM), ToEmString(GUI_HEALTH_GRID_HEIGHT)),
 		Priority = 1,
-		BackgroundColor = RGBa(0, 150, 0, 100),
+		// for debugging BackgroundColor = RGBa(0, 150, 0, 100),
 	};
+	
+	// create GUI
 
 	gui_health.ID = GuiOpen(gui_health.layout);
 
-	for (var index = 0; index < max_hearts; ++index)
+	for (var index = 0; index < GUI_HEALTH_MAX_HEARTS; ++index)
 	{
 		var heart = AssembleHeartSymbol(index);
 		
 		GuiUpdate({_new_icon = heart}, gui_health.ID);
 	}
 
-	UpdateHearts();
+	AddTimer(this.UpdateHearts, 1);
 
 	return _inherited(...);
-}
-
-private func AssembleHeartSymbol(int index)
-{
-	var heart_size = 10;
-	return {
-		Player = NO_OWNER, // hide initially,
-		Right = ToEmString(heart_size),
-		Bottom = ToEmString(heart_size),
-		ID = GetHeartID(index),
-		Priority = 1 + index,
-		// additional icons
-		scaled = { // scaleable subwindow
-			empty = {
-				Symbol = Icon_Heart,
-				GraphicsName = "Broken",
-				Priority = 11,
-			},
-			filled = {
-				Symbol = Icon_Heart,
-				Priority = 12,
-			},
-			BackgroundColor = RGBa(10 * index, 0, 0, 100),
-		},
-		multiplier = index, // info
-	};
 }
 
 
@@ -72,34 +63,90 @@ private func Destruction()
 	_inherited(...);
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// GUI Components
+
+private func AssembleHeartSymbol(int index)
+{
+	var heart = {
+		Player = NO_OWNER, // hide initially,
+		Right = ToEmString(GUI_HEALTH_HEART_SIZE_EM),
+		Bottom = ToEmString(GUI_HEALTH_HEART_SIZE_EM),
+		ID = GetHeartID(index),
+		Priority = 1 + index,
+		// additional icons
+		scaled = { // scaleable subwindow
+			Style = GUI_NoCrop,
+			empty = {
+				Symbol = Icon_Heart,
+				GraphicsName = "Broken",
+				Priority = 11,
+			},
+			filled = {
+				Symbol = Icon_Heart,
+				Priority = 12,
+			},
+		},
+	};
+	
+	var size = 750;
+	var scale = {
+		Prototype = GUI_BoxLayout,
+		Align = {X = GUI_AlignCenter, Y = GUI_AlignCenter},
+		Width = size, Height = size,
+	};
+	
+	AddProperties(heart.scaled, GuiCalculateBoxElementPosition(scale));
+	return heart;
+}
+
+
 private func GetHeartID(int index)
 {
 	return 1000 + index;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// GUI Update
 
 private func UpdateHearts()
 {
 	var cursor = GetCursor(GetOwner());
 	if (!cursor) return;
 	
+
 	var health = cursor->GetEnergy();
-	
-	var max_hearts = 20;
-	var health_per_heart = 4;
-	for (var heart = 0; heart < max_hearts; ++heart)
+	var health_max = cursor->GetMaxEnergy();
+
+	if (health != gui_health.last_health || health_max != gui_health.last_health_max)
 	{
-		var heart_offset = health_per_heart * heart;
-		var relative_health = BoundBy(health - heart_offset, 0, health_per_heart);
+		gui_health.last_health = health;
+		gui_health.last_health_max = health_max;
+		DisplayHearts(health, health_max);
+	}
+}
+
+private func DisplayHearts(int health, int health_max)
+{
+	for (var heart = 0; heart < GUI_HEALTH_MAX_HEARTS; ++heart)
+	{
+		var heart_offset = GUI_HEALTH_PER_HEART * heart;
+		var relative_health = BoundBy(health - heart_offset, 0, GUI_HEALTH_PER_HEART);
 		
-		var update = {Player = NO_OWNER, scaled = {empty = {}, filled = {}}};
+		var update = {Player = NO_OWNER, scaled = {filled = {}}};
 		
-		if (health > heart_offset)
+		if (health_max >= (heart_offset + GUI_HEALTH_PER_HEART)) // display
 		{
-			update.Player = GetOwner(); // display
-			update.scaled.filled.Text = Format("%d", relative_health);
+			update.Player = GetOwner();
 		}
 		
 		GuiUpdate(update, gui_health.ID, GetHeartID(heart));
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Callbacks
