@@ -26,7 +26,7 @@ private func Construction()
 	// define GUI
 
 	gui_health = {};
-	gui_health.layout =
+	gui_health.Layout =
 	{
 		Target = this,
 		Player = GetOwner(),
@@ -41,7 +41,7 @@ private func Construction()
 	
 	// create GUI
 
-	gui_health.ID = GuiOpen(gui_health.layout);
+	gui_health.ID = GuiOpen(gui_health.Layout);
 
 	for (var index = 0; index < GUI_HEALTH_MAX_HEARTS; ++index)
 	{
@@ -50,7 +50,7 @@ private func Construction()
 		GuiUpdate({_new_icon = heart}, gui_health.ID);
 	}
 
-	AddTimer(this.UpdateHearts, 1);
+	AddTimer(this.UpdateHealth, 1);
 
 	return _inherited(...);
 }
@@ -119,24 +119,69 @@ private func GetHeartID(int index)
 //
 // GUI Update
 
-private func UpdateHearts()
+private func UpdateHealth()
 {
-	var cursor = GetCursor(GetOwner());
-	if (!cursor) return;
-	
+	var crew = GetCursor(GetOwner());
+	if (!crew) return;
 
-	var health = cursor->GetEnergy();
-	var health_max = cursor->GetMaxEnergy();
-
-	if (health != gui_health.last_health || health_max != gui_health.last_health_max)
+	if (GuiShowForCrew(gui_health, GetOwner(), crew))
 	{
-		gui_health.last_health = health;
-		gui_health.last_health_max = health_max;
-		DisplayHearts(health, health_max);
+		gui_health.displayed = true; // easier that way
+		gui_health.crew = crew;
+
+		UpdateHearts();
+	}
+	else
+	{
+		gui_health.displayed = false;
 	}
 }
 
-private func DisplayHearts(int health, int health_max)
+
+private func UpdateHearts()
+{
+	var health = gui_health.crew->GetEnergy();
+	var health_max = gui_health.crew->GetMaxEnergy();
+
+	if (health != gui_health.health_known || health_max != gui_health.health_max)
+	{
+		if (health <= gui_health.health_known) // update health right away on damage
+		{
+			gui_health.health_shown = health;
+			DisplayHearts(health, health_max);
+		}
+		else if (!GetEffect("FxFillHearts", this)) // create filling effect
+		{
+			CreateEffect(FxFillHearts, 1, 5);
+		}
+
+		gui_health.health_known = health;
+		gui_health.health_max = health_max;
+	}
+}
+
+
+local FxFillHearts = new Effect
+{
+	Timer = func ()
+	{
+		if (Target.gui_health.health_shown == Target.gui_health.health_known)
+		{
+			return FX_Execute_Kill;
+		}
+		else
+		{
+			var health_old = Target.gui_health.health_shown;
+			Target.gui_health.health_shown += BoundBy(Target.gui_health.health_known - Target.gui_health.health_shown, -1, 1);
+			
+			Target->DisplayHearts(Target.gui_health.health_shown, Target.gui_health.health_max, health_old);
+			return FX_OK;
+		}
+	},
+};
+
+
+private func DisplayHearts(int health, int health_max, int health_old)
 {
 	for (var heart = 0; heart < GUI_HEALTH_MAX_HEARTS; ++heart)
 	{
@@ -144,7 +189,7 @@ private func DisplayHearts(int health, int health_max)
 		var relative_health = BoundBy(health - heart_offset, 0, GUI_HEALTH_PER_HEART);
 		
 		var update = {Player = NO_OWNER, scaled = {filled = {}}};
-		
+
 		if (health_max >= (heart_offset + GUI_HEALTH_PER_HEART)) // display
 		{
 			update.Player = GetOwner();
@@ -153,8 +198,91 @@ private func DisplayHearts(int health, int health_max)
 		
 		GuiUpdate(update, gui_health.ID, GetHeartID(heart));
 	}
+	
+	// gained a full heart
+	var gained_health = health_old && health_old < health && !(health % GUI_HEALTH_PER_HEART);
+	var has_crew = gui_health.crew && gui_health.displayed;
+	if (gained_health && has_crew)
+	{
+		gui_health.crew->Sound("UI::Health_Gain");
+	}
+}
+
+
+private func ResetHearts(object crew)
+{
+	if (crew == GetCursor(GetOwner()))
+	{
+		if (GetEffect("FxFillHearts", this))
+		{
+			RemoveEffect("FxFillHearts", this);
+		}
+	
+		var health = crew->GetEnergy();
+		var health_max = crew->GetMaxEnergy();
+	
+		gui_health.health_shown = health;
+		gui_health.health_known = health;
+		gui_health.health_max = health_max;
+		
+		DisplayHearts(health, health_max);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Callbacks
+
+
+public func OnCrewDisabled(object crew)
+{
+	ScheduleUpdateHealth();
+
+	return _inherited(crew, ...);
+}
+
+
+public func OnCrewEnabled(object crew)
+{
+	ScheduleUpdateHealth();
+
+	ResetHearts(crew);
+
+	return _inherited(crew, ...);
+}
+
+
+public func OnCrewSelection(object crew, bool deselect)
+{
+	ScheduleUpdateHealth();
+
+	ResetHearts(crew);
+
+	return _inherited(crew, deselect, ...);
+}
+
+
+// call from HUDAdapter (crew)
+public func OnSlotObjectChanged(int slot)
+{
+	// refresh inventory
+	ScheduleUpdateHealth();
+
+	return _inherited(slot, ...);
+}
+
+
+public func ScheduleUpdateHealth()
+{
+	if (!GetEffect("FxUpdateHealth", this))
+		CreateEffect(FxUpdateHealth, 1, 1);
+}
+
+local FxUpdateHealth = new Effect
+{
+	Timer = func ()
+	{
+		Target->UpdateHealth();
+		return FX_Execute_Kill;
+	}
+};
