@@ -56,12 +56,13 @@ static const FxDamageFlash = new Effect
 
 	Timer = func(int time)
 	{
-		if (time == 1 || time == 16 || time == 31)
+		var interval = 15;
+		if (time % interval == 1)
 		{
 			this.Target->Flash(RGB(255, 170, 0), 10);
 		}
 		
-		if (time >= 60)
+		if (time >= BoundBy(15 * this.Amount, 15, 120))
 		{
 			return FX_Execute_Kill;
 		}
@@ -80,11 +81,12 @@ global func Flash(int color, int duration, int overlay)
 }
 
 
-global func DamageFlash()
+global func DamageFlash(int amount)
 {
 	AssertObjectContext();
 	
 	var damage = GetEffect("FxDamageFlash", this) ?? CreateEffect(FxDamageFlash, 1, 1);
 	damage.Time = 0;
+	damage.Amount = Max(damage.Amount, amount);
 }
 
