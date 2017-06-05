@@ -47,8 +47,44 @@ static const FxFlash = new Effect
 };
 
 
+static const FxDamageFlash = new Effect
+{
+	Construction = func(int overlay)
+	{
+		this.overlay = overlay ?? 0;
+	},
+
+	Timer = func(int time)
+	{
+		if (time == 1 || time == 16 || time == 31)
+		{
+			this.Target->Flash(RGB(255, 170, 0), 10);
+		}
+		
+		if (time >= 60)
+		{
+			return FX_Execute_Kill;
+		}
+		else
+		{
+			return FX_OK;
+		}
+	},
+};
+
+
 global func Flash(int color, int duration, int overlay)
 {
 	AssertObjectContext();
 	CreateEffect(FxFlash, 1, 1, color, duration, overlay);
 }
+
+
+global func DamageFlash()
+{
+	AssertObjectContext();
+	
+	var damage = GetEffect("FxDamageFlash", this) ?? CreateEffect(FxDamageFlash, 1, 1);
+	damage.Time = 0;
+}
+
