@@ -1,0 +1,15 @@
+[DefCore]
+id=Item_Grappler
+Version=8,0
+Category=C4D_Object
+Width=8
+Height=6
+Offset=-4,-3
+Vertices=2
+VertexX=-3,3
+VertexY=0,0
+VertexFriction=80,80
+Value=16
+Mass=10
+Rotate=1
+Float=2
