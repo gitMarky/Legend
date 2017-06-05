@@ -5,9 +5,13 @@
 public func GetCarryTransform(clonk)
 {
 	if (GetCarrySpecial(clonk))
+	{
 		return Trans_Translate(1000, -6500, 0);
-
-	return Trans_Mul(Trans_Translate(1500, 0, -1500), Trans_Rotate(180, 1, 0, 0));
+	}
+	else
+	{
+		return Trans_Mul(Trans_Translate(1500, 0, -1500), Trans_Rotate(180, 1, 0, 0));
+	}
 }
 
 public func GetCarryPhase() { return 900; }
@@ -20,6 +24,7 @@ public func Hit(int x, int y)
 	StonyObjectHit(x,y);
 }
 
+
 /*-- Usage --*/
 
 public func ControlUse(object clonk, int x, int y)
@@ -27,6 +32,7 @@ public func ControlUse(object clonk, int x, int y)
 	Fuse();
 	return true;
 }
+
 
 /*-- Mechanism --*/
 
@@ -43,7 +49,7 @@ local FxBombFuse = new Effect
 	{
 		if (time > this.fuse)
 		{
-			Target->DoExplode();
+			Target->Detonate();
 			return FX_Execute_Kill;
 		}
 		else
@@ -94,15 +100,21 @@ public func Fuse()
 }
 
 
-public func DoExplode()
+public func Detonate()
 {
-	Explode(26);
+	Explode(30, false, this->GetWeaponDamageAmount());
 }
 
-public func IsExplosive() { return true; }
+
+/*-- Weapon Properties --*/
+
+public func IsWeapon() { return true; }
+public func GetWeaponDamageAmount(){ return 8; }
 
 
 /*-- Properties --*/
+
+public func IsExplosive() { return true; }
 
 local Collectible = true;
 local Name = "$Name$";
