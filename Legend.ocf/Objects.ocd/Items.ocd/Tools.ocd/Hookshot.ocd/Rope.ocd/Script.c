@@ -1,35 +1,13 @@
 
+/*-- Chain mechanism --*/
+
 local chain_segments;
 
-// Call this to break the rope.
-public func BreakRope()
-{
-	RemoveObject();
-	return;
-}
-
-
-/*-- Rope Callbacks --*/
-
-// From the rope library: to be overloaded for special segment behaviour.
-private func CreateSegment(int index, object previous)
-{
-	if (index == 0)
-		return;
-	var segment;
-	segment = CreateObjectAbove(Item_GrapplerChain);
-	return segment;
-}
-
-func GetConnectStatus(){ return true; }
-
-/*-- Rope connecting --*/
 
 // Connects two objects to the chain, but the length will vary on their positions.
 public func Connect(object obj1, object obj2)
 {
 	SetAction("Hide");
-	//AddEffect("IntHang", this, 1, 1, this);
 	this.obj1 = obj1;
 	this.obj2 = obj2;
 	chain_segments = [];
@@ -38,21 +16,30 @@ public func Connect(object obj1, object obj2)
 }
 
 
+// Call this to break the rope.
+public func BreakRope()
+{
+	RemoveObject();
+}
+
+
 public func HookRemoved()
 {
-	Log("HookRemoved->DrawIn");
-	DrawIn();
+	RemoveObject();
 }
 
-/* Callback form the rope library */
-public func MaxLengthReached()
+
+public func Destruction()
 {
+	if (chain_segments)
+	{
+		for (var i = 0; i < GetLength(chain_segments); ++i)
+		{
+			DeleteChainSegment(i);
+		}
+	}
 }
 
-// Adjust speed on swinging.
-public func DoSpeed(int value)
-{
-}
 
 
 local FxDrawIn = new Effect
@@ -83,8 +70,8 @@ local FxDrawIn = new Effect
 
 			if (distance < 10)
 			{
-				pull_me->RemoveObject();
 				Target->RemoveObject();
+				pull_me->RemoveObject();
 				return FX_Execute_Kill;
 			}
 		}
@@ -94,61 +81,15 @@ local FxDrawIn = new Effect
 
 public func DrawIn()
 {
-	Log("Drawn in!");
 	if (!GetEffect("FxDrawIn", this))
 	{
 		CreateEffect(FxDrawIn, 1, 1);
 	}
 }
 
-public func AdjustClonkMovement()
-{
-}
-
-public func GetClonkAngle()
-{
-	return 0;
-}
-
-public func GetClonkPos()
-{
-}
-
-public func GetClonkOff()
-{
-}
-
-public func SetLineTransform(object obj, int r, int xoff, int yoff, int length, int layer, int mirror_segments)
-{
-	if (!mirror_segments) 
-		mirror_segments = 1;
-	var fsin = Sin(r, 1000), fcos = Cos(r, 1000);
-	// Set matrix values.
-	obj->SetObjDrawTransform (
-		+fcos * mirror_segments, +fsin * length / 1000, xoff,
-		-fsin * mirror_segments, +fcos * length / 1000, yoff, layer
-	);
-}
-
-/*-- Library Overloads --*/
-
-
-// Only the grappler is stored.
-public func SaveScenarioObject() { return false; }
-
-local ActMap = {
-		Hide = {
-			Prototype = Action,
-			Name = "Hide",
-		},
-};
-
-local Name = "$Name$";
-
 
 /*-- Display --*/
 
-// From the rope library: to be overloaded for special segment behaviour.
 private func CreateChainSegment(int index)
 {
 	if (!chain_segments[index])
@@ -164,7 +105,7 @@ private func DeleteChainSegment(int index)
 }
 
 
-public func UpdateLines()
+private func UpdateLines()
 {
 	if (!this.obj2 || !this.obj1)
 	{
@@ -207,13 +148,18 @@ public func UpdateLines()
 }
 
 
-public func Destruction()
-{
-	if (chain_segments)
-	{
-		for (var i = 0; i < GetLength(chain_segments); ++i)
-		{
-			DeleteChainSegment(i);
-		}
-	}
-}
+/*-- Properties --*/
+
+// Only the grappler is stored.
+public func SaveScenarioObject() { return false; }
+
+
+local ActMap = {
+	Hide = {
+		Prototype = Action,
+		Name = "Hide",
+	},
+};
+
+
+local Name = "$Name$";
