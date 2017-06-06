@@ -1,9 +1,12 @@
 [DefCore]
 id=Item_GrapplerChain
-Version=6,0
+Version=8,0
 Category=C4D_StaticBack
 Vertices=2
 Width=2
 Height=12
 Offset=-1,-6
 HideInCreator=true
+Rotate=1
+NoStabilize=1
+

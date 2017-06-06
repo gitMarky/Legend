@@ -180,6 +180,7 @@ local InFlight = new Effect
 	Timer = func()
 	{
 		var distance = Distance(this.origin_x, this.origin_y, Target->GetX(), Target->GetY());
+		
 		if (this.reach <= distance)
 		{
 			Target->SetSpeed();

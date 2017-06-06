@@ -1,6 +1,5 @@
 
-local has_hook_anchored;
-local last_point;
+local chain_segments;
 
 // Call this to break the rope.
 public func BreakRope()
@@ -29,20 +28,15 @@ func GetConnectStatus(){ return true; }
 // Connects two objects to the chain, but the length will vary on their positions.
 public func Connect(object obj1, object obj2)
 {
-	has_hook_anchored = false;
 	SetAction("Hide");
 	//AddEffect("IntHang", this, 1, 1, this);
 	this.obj1 = obj1;
 	this.obj2 = obj2;
+	chain_segments = [];
+	AddTimer(this.UpdateLines, 1);
 	return;
 }
 
-
-// Callback form the hook, when it hits ground.
-public func HookAnchored()
-{
-	has_hook_anchored = true;
-}
 
 public func HookRemoved()
 {
@@ -64,7 +58,7 @@ public func DoSpeed(int value)
 local FxDrawIn = new Effect
 {
 	Timer = func ()
-	{
+	{	
 		var pull_to;
 		var pull_me;
 		if (this.Target.obj1 && this.Target.obj2)
@@ -90,6 +84,7 @@ local FxDrawIn = new Effect
 			if (distance < 10)
 			{
 				pull_me->RemoveObject();
+				Target->RemoveObject();
 				return FX_Execute_Kill;
 			}
 		}
@@ -108,11 +103,6 @@ public func DrawIn()
 
 public func AdjustClonkMovement()
 {
-}
-
-public func UpdateLines()
-{
-	return;
 }
 
 public func GetClonkAngle()
@@ -154,3 +144,76 @@ local ActMap = {
 };
 
 local Name = "$Name$";
+
+
+/*-- Display --*/
+
+// From the rope library: to be overloaded for special segment behaviour.
+private func CreateChainSegment(int index)
+{
+	if (!chain_segments[index])
+	{
+		chain_segments[index] = CreateObject(this->GetID());
+	}
+}
+
+
+private func DeleteChainSegment(int index)
+{
+	if (chain_segments[index]) chain_segments[index]->RemoveObject();
+}
+
+
+public func UpdateLines()
+{
+	if (!this.obj2 || !this.obj1)
+	{
+		RemoveTimer(this.UpdateLines);
+		return;
+	}
+
+	var prec = 1000;
+	var dx = this.obj2->GetX(prec) - this.obj1->GetX(prec);
+	var dy = this.obj2->GetY(prec) - this.obj1->GetY(prec);
+	var distance = Distance(dx, dy);
+	var angle = Angle(0, 0, dx, dy);
+	var segment_height = (GetID()->GetDefHeight() - 1);
+	var segment_length = segment_height * 1000;
+	var segment_amount = 1 + (distance - (distance % segment_length)) / segment_length;
+	// draw visible segments
+	for (var i = 0; i < segment_amount; ++i)
+	{
+		CreateChainSegment(i);
+		
+		var x = this.obj1->GetX(prec) + i * dx / segment_amount;
+		var y = this.obj1->GetY(prec) + i * dy / segment_amount;
+		
+		var length = BoundBy(distance - i * segment_length, 0, segment_length) / segment_height;
+	
+		// Update the position of the segment
+		chain_segments[i]->SetPosition(x, y, true, prec);
+		
+		// Only apply line transform to the rope segments and not to the hook.
+		chain_segments[i]->SetR(angle);
+		chain_segments[i]->SetObjDrawTransform(1000, 0, 0, 0, length, segment_height * length / (-2));
+	}
+	// remove obsolete objects
+	for (var i = segment_amount; i < GetLength(chain_segments); ++i)
+	{
+		DeleteChainSegment(i);
+	}
+	RemoveHoles(chain_segments);
+	return;
+}
+
+
+public func Destruction()
+{
+	if (chain_segments)
+	{
+		for (var i = 0; i < GetLength(chain_segments); ++i)
+		{
+			DeleteChainSegment(i);
+		}
+	}
+}
