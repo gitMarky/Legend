@@ -2,14 +2,16 @@
 /*-- Chain mechanism --*/
 
 local chain_segments;
+local hook;
+local launcher;
 
 
 // Connects two objects to the chain, but the length will vary on their positions.
-public func Connect(object obj1, object obj2)
+public func Connect(object hook, object launcher)
 {
 	SetAction("Hide");
-	this.obj1 = obj1;
-	this.obj2 = obj2;
+	this.hook = hook;
+	this.launcher = launcher;
 	chain_segments = [];
 	AddTimer(this.UpdateLines, 1);
 	return;
@@ -45,35 +47,24 @@ public func Destruction()
 local FxDrawIn = new Effect
 {
 	Timer = func ()
-	{	
-		var pull_to;
-		var pull_me;
-		if (this.Target.obj1 && this.Target.obj2)
+	{
+		var pull_to = Target.launcher;
+		var pull_me = Target.hook;
+
+		var precision = 1000;
+		var angle = Angle(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY(), precision);
+		var distance = Distance(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY());
+		var velocity = 70;
+		
+		pull_to->SetR(angle);
+
+		pull_me->SetSpeed(Sin(angle, velocity, precision), -Cos(angle, velocity, precision));
+
+		if (distance < 10)
 		{
-			if (this.Target.obj1->Contained())
-			{
-				pull_to = this.Target.obj1;
-				pull_me = this.Target.obj2;
-			}
-			else
-			{
-				pull_to = this.Target.obj2;
-				pull_me = this.Target.obj1;
-			}
-
-			var precision = 1000;
-			var angle = Angle(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY(), precision);
-			var distance = Distance(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY());
-			var velocity = 70;
-
-			pull_me->SetSpeed(Sin(angle, velocity, precision), -Cos(angle, velocity, precision));
-
-			if (distance < 10)
-			{
-				Target->RemoveObject();
-				pull_me->RemoveObject();
-				return FX_Execute_Kill;
-			}
+			Target->RemoveObject();
+			pull_me->RemoveObject();
+			return FX_Execute_Kill;
 		}
 	},
 };
@@ -107,15 +98,15 @@ private func DeleteChainSegment(int index)
 
 private func UpdateLines()
 {
-	if (!this.obj2 || !this.obj1)
+	if (!hook || !launcher)
 	{
 		RemoveTimer(this.UpdateLines);
 		return;
 	}
 
 	var prec = 1000;
-	var dx = this.obj2->GetX(prec) - this.obj1->GetX(prec);
-	var dy = this.obj2->GetY(prec) - this.obj1->GetY(prec);
+	var dx = hook->GetX(prec) - launcher->GetX(prec);
+	var dy = hook->GetY(prec) - launcher->GetY(prec);
 	var distance = Distance(dx, dy);
 	var angle = Angle(0, 0, dx, dy);
 	var segment_height = (GetID()->GetDefHeight() - 1);
@@ -126,8 +117,8 @@ private func UpdateLines()
 	{
 		CreateChainSegment(i);
 		
-		var x = this.obj1->GetX(prec) + i * dx / segment_amount;
-		var y = this.obj1->GetY(prec) + i * dy / segment_amount;
+		var x = launcher->GetX(prec) + i * dx / segment_amount;
+		var y = launcher->GetY(prec) + i * dy / segment_amount;
 		
 		var length = BoundBy(distance - i * segment_length, 0, segment_length) / segment_height;
 	
