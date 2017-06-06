@@ -7,32 +7,21 @@
 
 local chain; // The chain is the connection between the hook and the bow.
 local user;
-local pull;
 local launcher;
 local fx_control;
 
 public func GetChain() { return chain; }
 
 
-public func New(object new_user, object new_chain)
-{
-	user = new_user;
-	chain = new_chain;
-}
-
-
-public func Launch(int angle, int strength, int reach, object shooter, object bow)
+public func Launch(int angle, int strength, int reach, object shooter, object source)
 {
 	Exit();
 
-	pull = false;
-		
-	// Create chain.
 	chain = CreateObject(Item_GrapplerChain);
 
-	chain->Connect(this, bow);
+	chain->Connect(this, source);
 	user = shooter;
-	launcher = bow;
+	launcher = source;
 
 	var xdir = +Sin(angle, strength) + shooter->GetXDir();
 	var ydir = -Cos(angle, strength) + shooter->GetYDir();
@@ -84,35 +73,20 @@ private func Stick()
 			if (launcher) launcher->DrawChainIn();
 			return true;
 		}
-
-		chain->HookAnchored();
 		
 		// Draw in possible other active launchers the user is using once this hook hits a solid area and sticks.
 		for (var obj in FindObjects(Find_ID(launcher->GetID()), Find_Container(user)))
 			if (obj != launcher)
 				obj->DrawChainIn();
-				
-		ScheduleCall(this, "StartPull", 5); // TODO
 	}
 }
 
 
-public func StartPull()
+public func HitObject(object target)
 {
-	pull = true;
-	fx_control = AddEffect("IntGrappleControl", user, 1, 1, this);
-	if (user->GetAction() == "Jump")
-	{
-		chain->AdjustClonkMovement();
-		chain->ConnectPull();
-		fx_control.var5 = 1;
-		fx_control.var6 = 10;
-	}
-}
-
-
-public func HitObject(object obj)
-{
+	if (target == user) return;
+	
+	
 	/*
 	// Determine damage to obj from speed and arrow strength.
 	var relx = GetXDir() - obj->GetXDir();
@@ -143,10 +117,8 @@ public func HitObject(object obj)
 	*/
 	if (chain)
 	{
-		Log("HitObject->DrawIn");
 		chain->DrawIn();
 	}
-	return;
 }
 
 
@@ -269,8 +241,6 @@ public func FxIntGrappleControlControl(object target, proplist effect, int ctrl,
 	if (ctrl == CON_Up)
 	{
 		effect.mv_up = !release;
-		if ((target->GetAction() == "Jump" || target->GetAction() == "WallJump") && !release && pull)
-			chain->ConnectPull();
 	}
 	if (ctrl == CON_Down)
 	{
@@ -310,9 +280,7 @@ public func FxIntGrappleControlOnCarryHeavyPickUp(object target, proplist effect
 public func FxIntGrappleControlRejectCarryHeavyPickUp(object target, proplist effect, object heavy_object)
 {
 	// Block picking up carry-heavy objects when this user is hanging on a chain.
-	if (chain->PullObjects())
-		return true;
-	return false;
+	return true;
 }
 
 

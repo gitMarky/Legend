@@ -48,23 +48,77 @@ local FxDrawIn = new Effect
 {
 	Timer = func ()
 	{
-		var pull_to = Target.launcher;
-		var pull_me = Target.hook;
+		// determine objects
+	
+		var pull_to = GetOutmostContainer(Target.launcher);
+		var pull_me = GetOutmostContainer(Target.hook);
+
+		var mass_me = Max(pull_me->GetMass(), 1);
+		var mass_to = Max(pull_to->GetMass(), 1);
+		
+		// parameters
 
 		var precision = 1000;
 		var angle = Angle(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY(), precision);
 		var distance = Distance(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY());
-		var velocity = 70;
-		
-		pull_to->SetR(angle);
+		var velocity = 70 * Clonk->GetMass();
+		var max_velocity = 70;
 
-		pull_me->SetSpeed(Sin(angle, velocity, precision), -Cos(angle, velocity, precision));
+		// determine velocities
+
+		var vel_me = +velocity / mass_me;
+		
+		if (IsImmobile(pull_me))
+		{
+			vel_me = 0;
+		}
+
+		var remaining = BoundBy(velocity - vel_me * mass_me, 0, velocity);
+
+		var vel_to = -remaining / mass_to;
+
+		pull_to->SetR(angle);
+		
+		// update object velocity
+		
+		vel_me = Min(vel_me, max_velocity);
+		vel_to = Min(vel_to, max_velocity);
+
+		if (vel_me != 0) pull_me->SetSpeed(+Sin(angle, vel_me, precision), -Cos(angle, vel_me, precision));
+		if (vel_to != 0)
+		{
+			if (pull_to.ActMap && pull_to.ActMap.Jump)
+			{
+				pull_to->SetAction("Jump");
+			}
+			pull_to->SetSpeed(+Sin(angle, vel_to, precision), -Cos(angle, vel_to, precision));
+		}
+
+		Log("Speed: %v %v", vel_me, vel_to);
 
 		if (distance < 10)
 		{
 			Target->RemoveObject();
 			pull_me->RemoveObject();
 			return FX_Execute_Kill;
+		}
+	},
+	
+	IsImmobile = func(object target)
+	{
+		return target->Stuck() || !(target->GetCategory() == C4D_Object || target->GetCategory() == C4D_Vehicle);
+	},
+	
+	GetOutmostContainer = func(object target)
+	{
+		var outmost = target->Contained();
+		if (outmost)	
+		{
+			return GetOutmostContainer(outmost);
+		}
+		else
+		{
+			return target;
 		}
 	},
 };
