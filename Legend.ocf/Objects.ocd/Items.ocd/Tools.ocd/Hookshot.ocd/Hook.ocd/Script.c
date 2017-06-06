@@ -1,9 +1,8 @@
 /**
 	Grapple Hook
-	The hook can be shot with the grappling bow. On impact the hook will stick to the ground.
-	The hook also controls the swinging controls for the clonk.
+	The hook can be shot with the grappler. On impact the hook will stick to wooden or collectible objects.
 	
-	@author Randrian
+	@author Marky
 */
 
 local rope; // The rope is the connection between the hook and the bow.
@@ -35,13 +34,13 @@ public func Launch(int angle, int strength, int reach, object shooter, object bo
 	clonk = shooter;
 	grappler = bow;
 
-	var xdir = +Sin(angle, strength);
-	var ydir = -Cos(angle, strength);
+	var xdir = +Sin(angle, strength) + shooter->GetXDir();
+	var ydir = -Cos(angle, strength) + shooter->GetYDir();
 	SetXDir(xdir);
 	SetYDir(ydir);
 	SetR(angle);
 	Sound("Objects::Arrow::Shoot?");
-	
+
 	AddEffect("HitCheck", this, 1,1, nil, nil, shooter);
 	CreateEffect(InFlight, 1, 1, reach, xdir, ydir);
 }
@@ -171,22 +170,21 @@ local InFlight = new Effect
 	Construction = func(int reach, int xdir, int ydir)
 	{
 		this.reach = reach;
-		this.origin_x = Target->GetX();
-		this.origin_y = Target->GetY();
 		this.xdir = xdir;
 		this.ydir = ydir;
 	},
 
 	Timer = func()
 	{
-		var distance = Distance(this.origin_x, this.origin_y, Target->GetX(), Target->GetY());
+		var distance = Distance(Target.grappler->GetX(), Target.grappler->GetY(), Target->GetX(), Target->GetY());
+		
+		Target->SetR(Angle(Target.grappler->GetX(), Target.grappler->GetY(), Target->GetX(), Target->GetY()));
 		
 		if (this.reach <= distance)
 		{
 			Target->SetSpeed();
 			if (Target.rope)
 			{
-				Log("InFlight->DrawIn %d/%d", distance, this.reach);
 				Target.rope->DrawIn();
 			}
 			return FX_Execute_Kill;
@@ -334,12 +332,6 @@ public func FxIntGrappleControlStop(object target, proplist effect, int reason, 
 		this->GetRope()->BreakRope();
 	}
 	return FX_OK;
-}
-
-
-private func Trans_RotX(int rotation, int ox, int oy)
-{
-	return Trans_Mul(Trans_Translate(-ox, -oy), Trans_Rotate(rotation, 0, 0, 1), Trans_Translate(ox, oy));
 }
 
 
