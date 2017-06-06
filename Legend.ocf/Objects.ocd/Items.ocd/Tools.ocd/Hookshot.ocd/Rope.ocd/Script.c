@@ -9,6 +9,7 @@ public func BreakRope()
 	return;
 }
 
+
 /*-- Rope Callbacks --*/
 
 // From the rope library: to be overloaded for special segment behaviour.
@@ -25,12 +26,14 @@ func GetConnectStatus(){ return true; }
 
 /*-- Rope connecting --*/
 
-// Connects two objects to the rope, but the length will vary on their positions.
+// Connects two objects to the chain, but the length will vary on their positions.
 public func Connect(object obj1, object obj2)
 {
 	has_hook_anchored = false;
 	SetAction("Hide");
-	AddEffect("IntHang", this, 1, 1, this);
+	//AddEffect("IntHang", this, 1, 1, this);
+	this.obj1 = obj1;
+	this.obj2 = obj2;
 	return;
 }
 
@@ -43,6 +46,7 @@ public func HookAnchored()
 
 public func HookRemoved()
 {
+	Log("HookRemoved->DrawIn");
 	DrawIn();
 }
 
@@ -57,15 +61,48 @@ public func DoSpeed(int value)
 }
 
 
-public func FxDrawInTimer()
+local FxDrawIn = new Effect
 {
-}
-
-public func DrawIn(bool no_control)
-{
-	if (!GetEffect("DrawIn", this))
+	Timer = func ()
 	{
-		AddEffect("DrawIn", this, 1, 1, this);
+		var pull_to;
+		var pull_me;
+		if (this.Target.obj1 && this.Target.obj2)
+		{
+			if (this.Target.obj1->Contained())
+			{
+				pull_to = this.Target.obj1;
+				pull_me = this.Target.obj2;
+			}
+			else
+			{
+				pull_to = this.Target.obj2;
+				pull_me = this.Target.obj1;
+			}
+
+			var precision = 1000;
+			var angle = Angle(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY(), precision);
+			var distance = Distance(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY());
+			var velocity = 70;
+
+			pull_me->SetSpeed(Sin(angle, velocity, precision), -Cos(angle, velocity, precision));
+
+			if (distance < 10)
+			{
+				pull_me->RemoveObject();
+				return FX_Execute_Kill;
+			}
+		}
+	},
+};
+
+
+public func DrawIn()
+{
+	Log("Drawn in!");
+	if (!GetEffect("FxDrawIn", this))
+	{
+		CreateEffect(FxDrawIn, 1, 1);
 	}
 }
 

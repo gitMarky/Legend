@@ -74,7 +74,7 @@ public func FinishedAiming(object clonk, int angle)
 	// Shoot the hook and detach the mesh from the bow.
 	EnsureHook();
 	hook->Exit();
-	hook->Launch(angle, 100, clonk, this);
+	hook->Launch(angle, 80, 100, clonk, this);
 	hook_attach = nil;
 	DetachMesh(hook_attach);
 	Sound("Objects::Weapons::Bow::Shoot?");
@@ -117,11 +117,13 @@ public func ControlUseStart(object clonk, int x, int y)
 	// Cut rope, or otherwise remove helper object.
 	EnsureHook();
 
+/*
 	if (hook->Contained() != this)
 	{
 		var rope = hook->GetRope();
 		if (rope)
 		{
+			Log("ControlUseStart->DrawIn");
 			rope->DrawIn();
 			return true;
 		}
@@ -130,7 +132,7 @@ public func ControlUseStart(object clonk, int x, int y)
 			hook->Enter(this);
 		}
 	}
-
+*/
 	// Start aiming.
 	is_aiming = true;
 	ControlUseHolding(clonk, x, y);
@@ -199,6 +201,8 @@ public func DrawRopeIn()
 		var rope = hook->GetRope();
 		if (rope)
 		{
+			Log("DrawRopeIn->DrawIn");
+
 			rope->DrawIn();
 		}
 	}
@@ -213,6 +217,7 @@ public func LaunchProjectile()
 		var rope = hook->GetRope();
 		if (rope)
 		{
+			Log("LaunchProjectile->DrawIn");
 			rope->DrawIn();
 		}
 	}

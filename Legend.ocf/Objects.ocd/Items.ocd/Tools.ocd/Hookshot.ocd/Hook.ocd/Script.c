@@ -17,17 +17,13 @@ public func GetRope() { return rope; }
 
 public func New(object new_clonk, object new_rope)
 {
-	// Hook graphics are handled by rope.
-	this.Visibility = VIS_None;
 	clonk = new_clonk;
 	rope = new_rope;
 }
 
 
-public func Launch(int angle, int str, object shooter, object bow)
+public func Launch(int angle, int strength, int reach, object shooter, object bow)
 {
-	// Hook graphics are handled by rope.
-	this.Visibility = VIS_None;
 	Exit();
 
 	pull = false;
@@ -35,19 +31,19 @@ public func Launch(int angle, int str, object shooter, object bow)
 	// Create rope.
 	rope = CreateObject(Item_GrapplerChain);
 
-	//rope->Connect(this, bow);
-	//rope->ConnectLoose();
+	rope->Connect(this, bow);
 	clonk = shooter;
 	grappler = bow;
 
-	var xdir = Sin(angle, str);
-	var ydir = Cos(angle, -str);
+	var xdir = +Sin(angle, strength);
+	var ydir = -Cos(angle, strength);
 	SetXDir(xdir);
 	SetYDir(ydir);
 	SetR(angle);
 	Sound("Objects::Arrow::Shoot?");
 	
-	AddEffect("InFlight", this, 1, 1, this);
+	AddEffect("HitCheck", this, 1,1, nil, nil, shooter);
+	CreateEffect(InFlight, 1, 1, reach, xdir, ydir);
 }
 
 
@@ -63,6 +59,7 @@ private func Stick()
 	if (GetEffect("InFlight",this))
 	{
 		Sound("Objects::Arrow::HitGround");
+		RemoveEffect("HitCheck",this);
 		RemoveEffect("InFlight", this);
 	
 		SetXDir(0);
@@ -115,53 +112,100 @@ public func StartPull()
 }
 
 
+public func HitObject(object obj)
+{
+	/*
+	// Determine damage to obj from speed and arrow strength.
+	var relx = GetXDir() - obj->GetXDir();
+	var rely = GetYDir() - obj->GetYDir();
+	var speed = Sqrt(relx * relx + rely * rely);
+	var dmg = ArrowStrength() * speed * 1000 / 100;
+	
+	if (WeaponCanHit(obj))
+	{
+		if (obj->GetAlive())
+			Sound("Hits::ProjectileHitLiving?");
+		else
+			Sound("Objects::Arrow::HitGround");
+		
+		obj->~OnProjectileHit(this);
+		WeaponDamage(obj, dmg, FX_Call_EngObjHit, true);
+		WeaponTumble(obj, this->TumbleStrength());
+	}
+	*/
+
+	// Stick does something unwanted to controller.
+	// TODO: Stick only in wooden objects
+	/*
+	if (this) 
+	{
+		Stick();
+	}
+	*/
+	if (rope)
+	{
+		Log("HitObject->DrawIn");
+		rope->DrawIn();
+	}
+	return;
+}
+
+
 public func Hit()
 {
-	Stick();
-}
-
-
-public func FxInFlightStart(object target, proplist effect, int temp)
-{
-	if(temp) return;
-	effect.x = target->GetX();
-	effect.y = target->GetY();
-}
-
-
-public func FxInFlightTimer(object target, proplist effect, int time)
-{
-	var oldx = effect.x;
-	var oldy = effect.y;
-	var newx = GetX();
-	var newy = GetY();
-	
-	// and additionally, we need one check: If the hook has no speed
-	// anymore but is still in flight, we'll remove the hit check
-	if (oldx == newx && oldy == newy)
+	if (GetEffect("InFlight",this))
 	{
-		// but we give the arrow 5 frames to speed up again
-		effect.countdown++;
-		if (effect.countdown >= 10)
-			return Hit();
+		Sound("Objects::Arrow::HitGround");
 	}
-	else
-		effect.countdown = 0;
-
-	// Rotate hook according to speed
-	var anglediff = Normalize(Angle(oldx, oldy ,newx, newy) - GetR(), -180);
-	SetRDir(anglediff / 2);
-	effect.x = newx;
-	effect.y = newy;
-	return FX_OK;
+	//Stick();
+	if (rope)
+	{
+		Log("Hit->DrawIn");
+		rope->DrawIn();
+	}
 }
+
+
+local InFlight = new Effect 
+{
+	Construction = func(int reach, int xdir, int ydir)
+	{
+		this.reach = reach;
+		this.origin_x = Target->GetX();
+		this.origin_y = Target->GetY();
+		this.xdir = xdir;
+		this.ydir = ydir;
+	},
+
+	Timer = func()
+	{
+		var distance = Distance(this.origin_x, this.origin_y, Target->GetX(), Target->GetY());
+		if (this.reach <= distance)
+		{
+			Target->SetSpeed();
+			if (Target.rope)
+			{
+				Log("InFlight->DrawIn %d/%d", distance, this.reach);
+				Target.rope->DrawIn();
+			}
+			return FX_Execute_Kill;
+		}
+		else
+		{
+			Target->SetSpeed(this.xdir, this.ydir);
+			return FX_OK;
+		}
+	}
+};
 
 
 public func Entrance(object container)
 {
-	if(container->GetID() == GrappleBow) return;
+	if (container->GetID() == Item_Grappler) return;
 	if (rope)
+	{
 		rope->BreakRope();
+	}
 	RemoveObject();
 	return;
 }
@@ -172,10 +216,12 @@ public func OnRopeBreak()
 	// Remove control effect for the grapple bow, but only if it exists.
 	// Otherwise RemoveEffect with fx_hook == nil removes another effect in the clonk.
 	if (fx_hook)
+	{
 		RemoveEffect(nil, clonk, fx_hook);
+	}
 	RemoveObject();
-	return;
 }
+
 
 /*-- Grapple rope controls --*/
 
@@ -276,8 +322,6 @@ public func FxIntGrappleControlStop(object target, proplist effect, int reason, 
 	if (tmp) 
 		return FX_OK;
 	target->SetTurnType(0);
-	target->SetMeshTransformation(0, 2);
- 	target->SetMeshTransformation(0, 3);
 	target->StopAnimation(target->GetRootAnimation(10));
 	if (!target->GetHandAction())
 		target->SetHandAction(0);
@@ -285,6 +329,7 @@ public func FxIntGrappleControlStop(object target, proplist effect, int reason, 
 	// If the hook is not already drawing in, break the rope.
 	if (!GetEffect("DrawIn", this->GetRope()))
 	{
+		Log("GrappleControl->BreakRope");
 		this->GetRope()->BreakRope();
 	}
 	return FX_OK;
