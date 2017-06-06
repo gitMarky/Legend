@@ -1,23 +1,23 @@
 /**
 	Grapple Hook
-	The hook can be shot with the grappler. On impact the hook will stick to wooden or collectible objects.
+	The hook can be shot with the launcher. On impact the hook will stick to wooden or collectible objects.
 	
 	@author Marky
 */
 
-local rope; // The rope is the connection between the hook and the bow.
-local clonk;
+local chain; // The chain is the connection between the hook and the bow.
+local user;
 local pull;
-local grappler;
-local fx_hook;
+local launcher;
+local fx_control;
 
-public func GetRope() { return rope; }
+public func GetChain() { return chain; }
 
 
-public func New(object new_clonk, object new_rope)
+public func New(object new_user, object new_chain)
 {
-	clonk = new_clonk;
-	rope = new_rope;
+	user = new_user;
+	chain = new_chain;
 }
 
 
@@ -27,12 +27,12 @@ public func Launch(int angle, int strength, int reach, object shooter, object bo
 
 	pull = false;
 		
-	// Create rope.
-	rope = CreateObject(Item_GrapplerChain);
+	// Create chain.
+	chain = CreateObject(Item_GrapplerChain);
 
-	rope->Connect(this, bow);
-	clonk = shooter;
-	grappler = bow;
+	chain->Connect(this, bow);
+	user = shooter;
+	launcher = bow;
 
 	var xdir = +Sin(angle, strength) + shooter->GetXDir();
 	var ydir = -Cos(angle, strength) + shooter->GetYDir();
@@ -48,8 +48,8 @@ public func Launch(int angle, int strength, int reach, object shooter, object bo
 
 public func Destruction()
 {
-	if (rope)
-		rope->HookRemoved();
+	if (chain)
+		chain->HookRemoved();
 }
 
 
@@ -81,16 +81,16 @@ private func Stick()
 		if (!Stuck())
 		{
 			// If not, draw in to prevent hook from dragging you down
-			if (grappler) grappler->DrawRopeIn();
+			if (launcher) launcher->DrawChainIn();
 			return true;
 		}
 
-		rope->HookAnchored();
+		chain->HookAnchored();
 		
-		// Draw in possible other active grapplers the clonk is using once this hook hits a solid area and sticks.
-		for (var obj in FindObjects(Find_ID(GrappleBow), Find_Container(clonk)))
-			if (obj != grappler)
-				obj->DrawRopeIn();
+		// Draw in possible other active launchers the user is using once this hook hits a solid area and sticks.
+		for (var obj in FindObjects(Find_ID(launcher->GetID()), Find_Container(user)))
+			if (obj != launcher)
+				obj->DrawChainIn();
 				
 		ScheduleCall(this, "StartPull", 5); // TODO
 	}
@@ -100,13 +100,13 @@ private func Stick()
 public func StartPull()
 {
 	pull = true;
-	fx_hook = AddEffect("IntGrappleControl", clonk, 1, 1, this);
-	if (clonk->GetAction() == "Jump")
+	fx_control = AddEffect("IntGrappleControl", user, 1, 1, this);
+	if (user->GetAction() == "Jump")
 	{
-		rope->AdjustClonkMovement();
-		rope->ConnectPull();
-		fx_hook.var5 = 1;
-		fx_hook.var6 = 10;
+		chain->AdjustClonkMovement();
+		chain->ConnectPull();
+		fx_control.var5 = 1;
+		fx_control.var6 = 10;
 	}
 }
 
@@ -141,10 +141,10 @@ public func HitObject(object obj)
 		Stick();
 	}
 	*/
-	if (rope)
+	if (chain)
 	{
 		Log("HitObject->DrawIn");
-		rope->DrawIn();
+		chain->DrawIn();
 	}
 	return;
 }
@@ -157,10 +157,10 @@ public func Hit()
 		Sound("Objects::Arrow::HitGround");
 	}
 	//Stick();
-	if (rope)
+	if (chain)
 	{
 		Log("Hit->DrawIn");
-		rope->DrawIn();
+		chain->DrawIn();
 	}
 }
 
@@ -176,16 +176,16 @@ local InFlight = new Effect
 
 	Timer = func()
 	{
-		var distance = Distance(Target.grappler->GetX(), Target.grappler->GetY(), Target->GetX(), Target->GetY());
+		var distance = Distance(Target.launcher->GetX(), Target.launcher->GetY(), Target->GetX(), Target->GetY());
 		
-		Target->SetR(Angle(Target.grappler->GetX(), Target.grappler->GetY(), Target->GetX(), Target->GetY()));
+		Target->SetR(Angle(Target.launcher->GetX(), Target.launcher->GetY(), Target->GetX(), Target->GetY()));
 		
 		if (this.reach <= distance)
 		{
 			Target->SetSpeed();
-			if (Target.rope)
+			if (Target.chain)
 			{
-				Target.rope->DrawIn();
+				Target.chain->DrawIn();
 			}
 			return FX_Execute_Kill;
 		}
@@ -201,34 +201,34 @@ local InFlight = new Effect
 public func Entrance(object container)
 {
 	if (container->GetID() == Item_Grappler) return;
-	if (rope)
+	if (chain)
 	{
-		rope->BreakRope();
+		chain->BreakChain();
 	}
 	RemoveObject();
 	return;
 }
 
 
-public func OnRopeBreak()
+public func OnChainBreak()
 {
 	// Remove control effect for the grapple bow, but only if it exists.
-	// Otherwise RemoveEffect with fx_hook == nil removes another effect in the clonk.
-	if (fx_hook)
+	// Otherwise RemoveEffect with fx_control == nil removes another effect in the user.
+	if (fx_control)
 	{
-		RemoveEffect(nil, clonk, fx_hook);
+		RemoveEffect(nil, user, fx_control);
 	}
 	RemoveObject();
 }
 
 
-/*-- Grapple rope controls --*/
+/*-- Grapple chain controls --*/
 
 public func FxIntGrappleControlControl(object target, proplist effect, int ctrl, int x, int y, int strength, bool repeat, int status)
 {
 	if (status == CONS_Moved) return false;
 	var release = status == CONS_Up;
-	// Cancel this effect if clonk is now attached to something.
+	// Cancel this effect if user is now attached to something.
 	if (target->GetProcedure() == "ATTACH") 
 	{
 		RemoveEffect(nil, target, effect);
@@ -270,7 +270,7 @@ public func FxIntGrappleControlControl(object target, proplist effect, int ctrl,
 	{
 		effect.mv_up = !release;
 		if ((target->GetAction() == "Jump" || target->GetAction() == "WallJump") && !release && pull)
-			rope->ConnectPull();
+			chain->ConnectPull();
 	}
 	if (ctrl == CON_Down)
 	{
@@ -285,12 +285,12 @@ public func FxIntGrappleControlControl(object target, proplist effect, int ctrl,
 // Effect for smooth movement.
 public func FxIntGrappleControlTimer(object target, proplist effect, int time)
 {
-	// Cancel this effect if clonk is now attached to something
+	// Cancel this effect if user is now attached to something
 	// this check is also in the timer because on a high control rate
 	// (higher than 1 actually), the timer could be called first
 	if (target->GetProcedure() == "ATTACH")
 		return FX_Execute_Kill;
-	// Also cancel if the clonk is contained
+	// Also cancel if the user is contained
 	if (target->Contained())
 		return FX_Execute_Kill;
 		
@@ -301,7 +301,7 @@ public func FxIntGrappleControlTimer(object target, proplist effect, int time)
 public func FxIntGrappleControlOnCarryHeavyPickUp(object target, proplist effect, object heavy_object)
 {
 	// Remove the control effect when a carry-heavy object is picked up.
-	// The rope will then be drawn in automatically.
+	// The chain will then be drawn in automatically.
 	RemoveEffect(nil, target, effect);
 	return;
 }
@@ -309,8 +309,8 @@ public func FxIntGrappleControlOnCarryHeavyPickUp(object target, proplist effect
 
 public func FxIntGrappleControlRejectCarryHeavyPickUp(object target, proplist effect, object heavy_object)
 {
-	// Block picking up carry-heavy objects when this clonk is hanging on a rope.
-	if (rope->PullObjects())
+	// Block picking up carry-heavy objects when this user is hanging on a chain.
+	if (chain->PullObjects())
 		return true;
 	return false;
 }
@@ -325,17 +325,17 @@ public func FxIntGrappleControlStop(object target, proplist effect, int reason, 
 	if (!target->GetHandAction())
 		target->SetHandAction(0);
 	
-	// If the hook is not already drawing in, break the rope.
-	if (!GetEffect("DrawIn", this->GetRope()))
+	// If the hook is not already drawing in, break the chain.
+	if (!GetEffect("DrawIn", this->GetChain()))
 	{
-		Log("GrappleControl->BreakRope");
-		this->GetRope()->BreakRope();
+		Log("GrappleControl->BreakChain");
+		this->GetChain()->BreakChain();
 	}
 	return FX_OK;
 }
 
 
-// Only the grappler is stored.
+// Only the launcher is stored.
 public func SaveScenarioObject() { return false; }
 
 /*-- Properties --*/

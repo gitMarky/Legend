@@ -19,7 +19,7 @@ func Initialize()
 		WalkBack       = 56,
 		AimSpeed       = 20,
 	};
-	OnRopeBreak();
+	OnChainBreak();
 }
 
 
@@ -33,10 +33,10 @@ func Destruction()
 {
 	if (hook)
 	{
-		var rope = hook->GetRope();
-		if (rope)
+		var chain = hook->GetChain();
+		if (chain)
 		{
-			rope->BreakRope();
+			chain->BreakChain();
 		}
 	}
 }
@@ -46,10 +46,10 @@ func Departure()
 {
 	if (hook)
 	{
-		var rope = hook->GetRope();
-		if (rope)
+		var chain = hook->GetChain();
+		if (chain)
 		{
-			rope->BreakRope();
+			chain->BreakChain();
 		}
 	}
 }
@@ -84,7 +84,7 @@ public func FinishedAiming(object clonk, int angle)
 }
 
 
-public func OnRopeBreak()
+public func OnChainBreak()
 {
 	if (hook_attach)
 	{
@@ -114,17 +114,17 @@ public func RejectUse(object clonk)
 
 public func ControlUseStart(object clonk, int x, int y)
 {
-	// Cut rope, or otherwise remove helper object.
+	// Cut chain, or otherwise remove helper object.
 	EnsureHook();
 
 /*
 	if (hook->Contained() != this)
 	{
-		var rope = hook->GetRope();
-		if (rope)
+		var chain = hook->GetChain();
+		if (chain)
 		{
 			Log("ControlUseStart->DrawIn");
-			rope->DrawIn();
+			chain->DrawIn();
 			return true;
 		}
 		else
@@ -194,31 +194,31 @@ func EnsureHook()
 }
 
 
-public func DrawRopeIn()
+public func DrawChainIn()
 {
 	if (hook)
 	{
-		var rope = hook->GetRope();
-		if (rope)
+		var chain = hook->GetChain();
+		if (chain)
 		{
-			Log("DrawRopeIn->DrawIn");
+			Log("DrawChainIn->DrawIn");
 
-			rope->DrawIn();
+			chain->DrawIn();
 		}
 	}
 }
 
 
-// If shot (e.g. by a cannon) the rope is drawn in.
+// If shot (e.g. by a cannon) the chain is drawn in.
 public func LaunchProjectile()
 {
 	if (hook)
 	{
-		var rope = hook->GetRope();
-		if (rope)
+		var chain = hook->GetChain();
+		if (chain)
 		{
 			Log("LaunchProjectile->DrawIn");
-			rope->DrawIn();
+			chain->DrawIn();
 		}
 	}
 	_inherited(...);

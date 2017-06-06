@@ -19,7 +19,7 @@ public func Connect(object hook, object launcher)
 
 
 // Call this to break the rope.
-public func BreakRope()
+public func BreakChain()
 {
 	RemoveObject();
 }
