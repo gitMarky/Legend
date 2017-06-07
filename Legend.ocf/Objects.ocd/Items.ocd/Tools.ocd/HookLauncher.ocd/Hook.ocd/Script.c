@@ -85,39 +85,23 @@ private func Stick()
 public func HitObject(object target)
 {
 	if (target == user) return;
-	
-	
-	/*
-	// Determine damage to obj from speed and arrow strength.
-	var relx = GetXDir() - obj->GetXDir();
-	var rely = GetYDir() - obj->GetYDir();
-	var speed = Sqrt(relx * relx + rely * rely);
-	var dmg = ArrowStrength() * speed * 1000 / 100;
-	
-	if (WeaponCanHit(obj))
-	{
-		if (obj->GetAlive())
-			Sound("Hits::ProjectileHitLiving?");
-		else
-			Sound("Objects::Arrow::HitGround");
-		
-		obj->~OnProjectileHit(this);
-		WeaponDamage(obj, dmg, FX_Call_EngObjHit, true);
-		WeaponTumble(obj, this->TumbleStrength());
-	}
-	*/
 
-	// Stick does something unwanted to controller.
-	// TODO: Stick only in wooden objects
-	/*
-	if (this) 
-	{
-		Stick();
-	}
-	*/
+	Stun(target);	
+	StickTo(target);
+
 	if (chain)
 	{
 		chain->DrawIn();
+	}
+}
+
+
+public func GetHookTarget()
+{
+	var fx = GetEffect("StickToTarget", this);
+	if (fx)
+	{
+		return fx.stick_to;
 	}
 }
 
@@ -133,6 +117,34 @@ public func Hit()
 	{
 		Log("Hit->DrawIn");
 		chain->DrawIn();
+	}
+}
+
+
+public func Stun(object target)
+{
+	if (WeaponCanHit(target))
+	{
+		// Determine damage to obj from speed and arrow strength.
+		if (target->GetAlive())
+			Sound("Hits::ProjectileHitLiving?");
+		else
+			Sound("Objects::Arrow::HitGround");
+
+		target->~OnProjectileHit(this);
+		
+		// TODO: actual stun
+		//WeaponDamage(target, 0, FX_Call_EngObjHit, true);
+		//WeaponTumble(target, this->TumbleStrength());
+	}
+}
+
+
+public func StickTo(object target)
+{
+	if (target.Collectible || target->~IsHookLauncherTarget())
+	{
+		if (!GetEffect("StickToTarget")) CreateEffect(StickToTarget, 1, 1, target);
 	}
 }
 
@@ -167,6 +179,30 @@ local InFlight = new Effect
 			return FX_OK;
 		}
 	}
+};
+
+
+local StickToTarget = new Effect
+{
+	Construction = func (object stick_to)
+	{
+		this.prec = 1000;
+		this.stick_to = stick_to;
+		this.dx = Target->GetX(this.prec) - stick_to->GetX(this.prec);
+		this.dy = Target->GetY(this.prec) - stick_to->GetY(this.prec);	
+	},
+	
+	Timer = func ()
+	{
+		if (this.stick_to)
+		{
+			Target->SetPosition(this.stick_to->GetX(this.prec) + this.dx, this.stick_to->GetY(this.prec) + this.dy, true, this.prec);
+		}
+		else
+		{
+			return FX_Execute_Kill;
+		}
+	},
 };
 
 

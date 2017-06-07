@@ -111,7 +111,7 @@ local FxDrawIn = new Effect
 	
 	GetOutmostContainer = func(object target)
 	{
-		var outmost = target->Contained();
+		var outmost = target->Contained() ?? target->~GetHookTarget();
 		if (outmost)	
 		{
 			return GetOutmostContainer(outmost);
