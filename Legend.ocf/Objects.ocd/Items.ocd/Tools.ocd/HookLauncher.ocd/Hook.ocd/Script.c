@@ -5,13 +5,35 @@
 	@author Marky
 */
 
+/*-- Properties --*/
+
 local chain; // The chain is the connection between the hook and the bow.
 local user;
 local launcher;
 local fx_control;
 
+local Name = "$Name$";
+local Plane = 300;
+
+
+// Only the launcher is stored.
+public func SaveScenarioObject() { return false; }
+
+
 public func GetChain() { return chain; }
 
+
+public func GetHookTarget()
+{
+	var fx = GetEffect("StickToTarget", this);
+	if (fx)
+	{
+		return fx.stick_to;
+	}
+}
+
+
+/*-- Callbacks --*/
 
 public func Launch(int angle, int strength, int reach, object shooter, object source)
 {
@@ -42,6 +64,19 @@ public func Destruction()
 }
 
 
+public func Hit()
+{
+	if (GetEffect("InFlight",this))
+	{
+		Sound("Objects::Arrow::HitGround");
+	}
+	if (chain)
+	{
+		chain->DrawIn();
+	}
+}
+
+
 public func HitObject(object target)
 {
 	if (target == user) return;
@@ -59,30 +94,32 @@ public func HitObject(object target)
 }
 
 
-public func GetHookTarget()
+public func Entrance(object container)
 {
-	var fx = GetEffect("StickToTarget", this);
-	if (fx)
-	{
-		return fx.stick_to;
-	}
-}
-
-
-public func Hit()
-{
-	if (GetEffect("InFlight",this))
-	{
-		Sound("Objects::Arrow::HitGround");
-	}
+	if (container->GetID() == Item_Grappler) return;
 	if (chain)
 	{
-		chain->DrawIn();
+		chain->BreakChain();
 	}
+	RemoveObject();
 }
 
 
-public func Stun(object target)
+public func OnChainBreak()
+{
+	// Remove control effect for the grapple bow, but only if it exists.
+	// Otherwise RemoveEffect with fx_control == nil removes another effect in the user.
+	if (fx_control)
+	{
+		RemoveEffect(nil, user, fx_control);
+	}
+	RemoveObject();
+}
+
+
+/*-- Internals --*/
+
+private func Stun(object target)
 {
 	if (WeaponCanHit(target))
 	{
@@ -101,7 +138,7 @@ public func Stun(object target)
 }
 
 
-public func StickTo(object target)
+private func StickTo(object target)
 {
 	if (CanStickTo(target) && !GetEffect("StickToTarget", this))
 	{
@@ -171,30 +208,6 @@ local StickToTarget = new Effect
 		}
 	},
 };
-
-
-public func Entrance(object container)
-{
-	if (container->GetID() == Item_Grappler) return;
-	if (chain)
-	{
-		chain->BreakChain();
-	}
-	RemoveObject();
-	return;
-}
-
-
-public func OnChainBreak()
-{
-	// Remove control effect for the grapple bow, but only if it exists.
-	// Otherwise RemoveEffect with fx_control == nil removes another effect in the user.
-	if (fx_control)
-	{
-		RemoveEffect(nil, user, fx_control);
-	}
-	RemoveObject();
-}
 
 
 /*-- Grapple chain controls --*/
@@ -304,13 +317,3 @@ public func FxIntGrappleControlStop(object target, proplist effect, int reason, 
 	}
 	return FX_OK;
 }
-
-
-// Only the launcher is stored.
-public func SaveScenarioObject() { return false; }
-
-/*-- Properties --*/
-
-
-local Name = "$Name$";
-local Plane = 300;
