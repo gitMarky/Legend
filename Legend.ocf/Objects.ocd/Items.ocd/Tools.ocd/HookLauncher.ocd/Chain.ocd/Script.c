@@ -50,8 +50,16 @@ local FxDrawIn = new Effect
 {
 	Timer = func ()
 	{
+		if (!Target.launcher || !Target.hook)
+		{
+			if (Target.hook)
+			{
+				Target.hook->RemoveObject();
+			}		
+			return FX_Execute_Kill;
+		}
+	
 		// determine objects
-		var hook = Target.hook;
 		var user = Target.launcher->Contained();
 
 		var pull_to = GetOutmostContainer(Target.launcher);
@@ -76,6 +84,35 @@ local FxDrawIn = new Effect
 		{
 			vel_me = 0;
 		}
+		else // sanity checks for stuck hook
+		{
+			this.hook_xold = this.hook_xnew;
+			this.hook_yold = this.hook_ynew;
+			this.hook_xnew = Target.hook->GetX();
+			this.hook_ynew = Target.hook->GetY();
+			
+			if (this.hook_xold == this.hook_xnew
+			 && this.hook_yold == this.hook_ynew)
+			{
+				++this.hook_stuck;
+			}
+			else
+			{
+				this.hook_stuck = 0;
+			}
+			
+			if (this.hook_stuck > 20)
+			{
+				Target.hook->RemoveObject();
+				return FX_Execute_Kill;
+			}
+			else if (this.hook_stuck > 10)
+			{
+				Target.hook->~UnStick();
+			}
+		}
+		
+		// calculate velocity
 
 		var remaining = BoundBy(velocity - vel_me * mass_me, 0, velocity);
 
@@ -98,8 +135,6 @@ local FxDrawIn = new Effect
 			pull_to->SetSpeed(+Sin(angle, vel_to, precision), -Cos(angle, vel_to, precision));
 		}
 
-		Log("Speed: %v %v", vel_me, vel_to);
-
 		if (distance < 10)
 		{
 			if (pull_me.Collectible && user)
@@ -107,8 +142,7 @@ local FxDrawIn = new Effect
 				user->~Collect(pull_me);
 			}
 
-			Target->RemoveObject();
-			hook->RemoveObject();
+			Target.hook->RemoveObject();
 			return FX_Execute_Kill;
 		}
 	},

@@ -143,6 +143,12 @@ private func StickTo(object target)
 }
 
 
+private func UnStick()
+{
+	RemoveEffect(nil, this, fx_stick);
+}
+
+
 public func CanStickTo(object target) // callback from IsProjectileTarget <- stupid code structure, but why not :)
 {
 	return target.Collectible || target->~IsHookLauncherTarget();
