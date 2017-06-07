@@ -91,6 +91,8 @@ local FxDrawIn = new Effect
 		var distance = Distance(pull_me->GetX(), pull_me->GetY(), pull_to->GetX(), pull_to->GetY());
 		var velocity = 70 * Clonk->GetMass();
 		var max_velocity = 70;
+		
+		if (distance < 20) velocity /= 2; // slow down
 
 		// determine velocities
 
@@ -144,7 +146,7 @@ local FxDrawIn = new Effect
 		if (vel_me != 0) pull_me->SetSpeed(+Sin(angle, vel_me, precision), -Cos(angle, vel_me, precision));
 		if (vel_to != 0)
 		{
-			if (pull_to.ActMap && pull_to.ActMap.Jump)
+			if (pull_to.ActMap && pull_to.ActMap.Jump && pull_to->GetProcedure() != DFA_FLIGHT)
 			{
 				pull_to->SetAction("Jump");
 			}
