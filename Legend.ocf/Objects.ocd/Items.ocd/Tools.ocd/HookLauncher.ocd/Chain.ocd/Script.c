@@ -45,6 +45,19 @@ public func Destruction()
 }
 
 
+local FxNoBash = new Effect
+{
+	QueryHitClonk = func (object clonk)
+	{
+		return true;
+	},
+	
+	Timer = func()
+	{
+		return FX_Execute_Kill;
+	},
+};
+
 
 local FxDrawIn = new Effect
 {
@@ -58,7 +71,7 @@ local FxDrawIn = new Effect
 			}		
 			return FX_Execute_Kill;
 		}
-	
+
 		// determine objects
 		var user = Target.launcher->Contained();
 
@@ -67,6 +80,9 @@ local FxDrawIn = new Effect
 
 		var mass_me = Max(pull_me->GetMass(), 1);
 		var mass_to = Max(pull_to->GetMass(), 1);
+		
+		// save user from getting hurt
+		pull_me->CreateEffect(Item_GrapplerChain.FxNoBash, 1, 5);
 
 		// parameters
 
