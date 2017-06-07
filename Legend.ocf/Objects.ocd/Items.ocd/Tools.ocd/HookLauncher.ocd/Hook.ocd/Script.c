@@ -86,8 +86,8 @@ public func HitObject(object target)
 	RemoveEffect(nil, this, fx_flight);
 	RemoveEffect("HitCheck", this);
 
-	Stun(target);
 	StickTo(target);
+	Stun(target);
 
 	if (chain)
 	{
