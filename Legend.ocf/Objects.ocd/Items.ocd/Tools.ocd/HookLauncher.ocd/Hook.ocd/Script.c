@@ -10,7 +10,6 @@
 local chain; // The chain is the connection between the hook and the bow.
 local user;
 local launcher;
-local fx_control;
 
 local Name = "$Name$";
 local Plane = 300;
@@ -107,12 +106,6 @@ public func Entrance(object container)
 
 public func OnChainBreak()
 {
-	// Remove control effect for the grapple bow, but only if it exists.
-	// Otherwise RemoveEffect with fx_control == nil removes another effect in the user.
-	if (fx_control)
-	{
-		RemoveEffect(nil, user, fx_control);
-	}
 	RemoveObject();
 }
 
@@ -208,112 +201,3 @@ local StickToTarget = new Effect
 		}
 	},
 };
-
-
-/*-- Grapple chain controls --*/
-
-public func FxIntGrappleControlControl(object target, proplist effect, int ctrl, int x, int y, int strength, bool repeat, int status)
-{
-	if (status == CONS_Moved) return false;
-	var release = status == CONS_Up;
-	// Cancel this effect if user is now attached to something.
-	if (target->GetProcedure() == "ATTACH") 
-	{
-		RemoveEffect(nil, target, effect);
-		return false;
-	}
-
-	if (ctrl != CON_Up && ctrl != CON_Down && ctrl != CON_Right && ctrl != CON_Left)
-		return false;
-
-	if (ctrl == CON_Right)
-	{
-		effect.mv_right = !release;
-		if (release)
-		{
-			if (effect.lastkey == CON_Right)
-			{
-		    	target->SetDir(0);
-		    	target->UpdateTurnRotation();
-			}
-			effect.lastkey = CON_Right;
-			effect.keyTimer = 10;
-		}
-	}
-	if (ctrl == CON_Left)
-	{
-		effect.mv_left = !release;
-		if (release)
-		{
-			if (effect.lastkey == CON_Left)
-			{
-		    	target->SetDir(1);
-		    	target->UpdateTurnRotation();
-			}
-			effect.lastkey = CON_Left;
-			effect.keyTimer = 10;
-		}
-	}
-	if (ctrl == CON_Up)
-	{
-		effect.mv_up = !release;
-	}
-	if (ctrl == CON_Down)
-	{
-		effect.mv_down = !release;
-	}
-	
-	// Never swallow the control.
-	return false;
-}
-
-
-// Effect for smooth movement.
-public func FxIntGrappleControlTimer(object target, proplist effect, int time)
-{
-	// Cancel this effect if user is now attached to something
-	// this check is also in the timer because on a high control rate
-	// (higher than 1 actually), the timer could be called first
-	if (target->GetProcedure() == "ATTACH")
-		return FX_Execute_Kill;
-	// Also cancel if the user is contained
-	if (target->Contained())
-		return FX_Execute_Kill;
-		
-	return FX_OK;
-}
-
-
-public func FxIntGrappleControlOnCarryHeavyPickUp(object target, proplist effect, object heavy_object)
-{
-	// Remove the control effect when a carry-heavy object is picked up.
-	// The chain will then be drawn in automatically.
-	RemoveEffect(nil, target, effect);
-	return;
-}
-
-
-public func FxIntGrappleControlRejectCarryHeavyPickUp(object target, proplist effect, object heavy_object)
-{
-	// Block picking up carry-heavy objects when this user is hanging on a chain.
-	return true;
-}
-
-
-public func FxIntGrappleControlStop(object target, proplist effect, int reason, int tmp)
-{
-	if (tmp) 
-		return FX_OK;
-	target->SetTurnType(0);
-	target->StopAnimation(target->GetRootAnimation(10));
-	if (!target->GetHandAction())
-		target->SetHandAction(0);
-	
-	// If the hook is not already drawing in, break the chain.
-	if (!GetEffect("DrawIn", this->GetChain()))
-	{
-		Log("GrappleControl->BreakChain");
-		this->GetChain()->BreakChain();
-	}
-	return FX_OK;
-}
