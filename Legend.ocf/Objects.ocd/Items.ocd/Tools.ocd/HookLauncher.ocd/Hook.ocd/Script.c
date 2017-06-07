@@ -42,51 +42,14 @@ public func Destruction()
 }
 
 
-private func Stick()
-{
-	if (GetEffect("InFlight",this))
-	{
-		Sound("Objects::Arrow::HitGround");
-		RemoveEffect("HitCheck",this);
-		RemoveEffect("InFlight", this);
-	
-		SetXDir(0);
-		SetYDir(0);
-		SetRDir(0);
-
-		// Stick in landscape (vertex 3-7)
-		SetVertex(2, VTX_X,  0, 2);
-		SetVertex(2, VTX_Y, -6, 2);
-		SetVertex(3, VTX_X, -3, 2);
-		SetVertex(3, VTX_Y, -4, 2);
-		SetVertex(4, VTX_X,  3, 2);
-		SetVertex(4, VTX_Y, -4, 2);
-		SetVertex(5, VTX_X,  4, 2);
-		SetVertex(5, VTX_Y, -1, 2);
-		SetVertex(6, VTX_X, -4, 2);
-		SetVertex(6, VTX_Y, -1, 2);
-		
-		// Stick successful?
-		if (!Stuck())
-		{
-			// If not, draw in to prevent hook from dragging you down
-			if (launcher) launcher->DrawChainIn();
-			return true;
-		}
-		
-		// Draw in possible other active launchers the user is using once this hook hits a solid area and sticks.
-		for (var obj in FindObjects(Find_ID(launcher->GetID()), Find_Container(user)))
-			if (obj != launcher)
-				obj->DrawChainIn();
-	}
-}
-
-
 public func HitObject(object target)
 {
 	if (target == user) return;
 
-	Stun(target);	
+	RemoveEffect("InFlight", this);
+	RemoveEffect("HitCheck",this);
+
+	Stun(target);
 	StickTo(target);
 
 	if (chain)
@@ -112,10 +75,8 @@ public func Hit()
 	{
 		Sound("Objects::Arrow::HitGround");
 	}
-	//Stick();
 	if (chain)
 	{
-		Log("Hit->DrawIn");
 		chain->DrawIn();
 	}
 }
@@ -142,10 +103,16 @@ public func Stun(object target)
 
 public func StickTo(object target)
 {
-	if (target.Collectible || target->~IsHookLauncherTarget())
+	if (CanStickTo(target) && !GetEffect("StickToTarget", this))
 	{
-		if (!GetEffect("StickToTarget")) CreateEffect(StickToTarget, 1, 1, target);
+		CreateEffect(StickToTarget, 1, 1, target);
 	}
+}
+
+
+public func CanStickTo(object target) // callback from IsProjectileTarget <- stupid code structure, but why not :)
+{
+	return target.Collectible || target->~IsHookLauncherTarget();
 }
 
 

@@ -1,7 +1,7 @@
 
 global func IsProjectileTarget(object projectile, object shooter)
 {
-	if (projectile->GetID() == Item_GrapplerHook && (this.Collectible || this->~IsHookLauncherTarget()))
+	if (projectile->GetID() == Item_GrapplerHook && projectile->~CanStickTo(this))
 	{
 		return true;
 	}
