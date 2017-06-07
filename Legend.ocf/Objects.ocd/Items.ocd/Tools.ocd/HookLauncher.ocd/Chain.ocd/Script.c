@@ -5,6 +5,8 @@ local chain_segments;
 local hook;
 local launcher;
 
+local fx_draw;
+
 
 // Connects two objects to the chain, but the length will vary on their positions.
 public func Connect(object hook, object launcher)
@@ -49,13 +51,15 @@ local FxDrawIn = new Effect
 	Timer = func ()
 	{
 		// determine objects
-	
+		var hook = Target.hook;
+		var user = Target.launcher->Contained();
+
 		var pull_to = GetOutmostContainer(Target.launcher);
 		var pull_me = GetOutmostContainer(Target.hook);
 
 		var mass_me = Max(pull_me->GetMass(), 1);
 		var mass_to = Max(pull_to->GetMass(), 1);
-		
+
 		// parameters
 
 		var precision = 1000;
@@ -67,7 +71,7 @@ local FxDrawIn = new Effect
 		// determine velocities
 
 		var vel_me = +velocity / mass_me;
-		
+	
 		if (IsImmobile(pull_me))
 		{
 			vel_me = 0;
@@ -78,9 +82,9 @@ local FxDrawIn = new Effect
 		var vel_to = -remaining / mass_to;
 
 		pull_to->SetR(angle);
-		
+
 		// update object velocity
-		
+
 		vel_me = Min(vel_me, max_velocity);
 		vel_to = Min(vel_to, max_velocity);
 
@@ -98,8 +102,13 @@ local FxDrawIn = new Effect
 
 		if (distance < 10)
 		{
+			if (pull_me.Collectible && user)
+			{
+				user->~Collect(pull_me);
+			}
+
 			Target->RemoveObject();
-			pull_me->RemoveObject();
+			hook->RemoveObject();
 			return FX_Execute_Kill;
 		}
 	},
@@ -126,9 +135,9 @@ local FxDrawIn = new Effect
 
 public func DrawIn()
 {
-	if (!GetEffect("FxDrawIn", this))
+	if (!fx_draw)
 	{
-		CreateEffect(FxDrawIn, 1, 1);
+		fx_draw = CreateEffect(FxDrawIn, 1, 1);
 	}
 }
 

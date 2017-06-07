@@ -11,6 +11,8 @@ local chain; // The chain is the connection between the hook and the bow.
 local user;
 local launcher;
 
+local fx_flight, fx_stick;
+
 local Name = "$Name$";
 local Plane = 300;
 
@@ -24,10 +26,9 @@ public func GetChain() { return chain; }
 
 public func GetHookTarget()
 {
-	var fx = GetEffect("StickToTarget", this);
-	if (fx)
+	if (fx_stick)
 	{
-		return fx.stick_to;
+		return fx_stick.stick_to;
 	}
 }
 
@@ -51,8 +52,8 @@ public func Launch(int angle, int strength, int reach, object shooter, object so
 	SetR(angle);
 	Sound("Objects::Arrow::Shoot?");
 
+	fx_flight = CreateEffect(InFlight, 1, 1, reach, xdir, ydir);
 	AddEffect("HitCheck", this, 1,1, nil, nil, shooter);
-	CreateEffect(InFlight, 1, 1, reach, xdir, ydir);
 }
 
 
@@ -65,7 +66,7 @@ public func Destruction()
 
 public func Hit()
 {
-	if (GetEffect("InFlight",this))
+	if (fx_flight)
 	{
 		Sound("Objects::Arrow::HitGround");
 	}
@@ -73,6 +74,8 @@ public func Hit()
 	{
 		chain->DrawIn();
 	}
+	RemoveEffect(nil, this, fx_flight);
+	RemoveEffect("HitCheck", this);
 }
 
 
@@ -80,8 +83,8 @@ public func HitObject(object target)
 {
 	if (target == user) return;
 
-	RemoveEffect("InFlight", this);
-	RemoveEffect("HitCheck",this);
+	RemoveEffect(nil, this, fx_flight);
+	RemoveEffect("HitCheck", this);
 
 	Stun(target);
 	StickTo(target);
@@ -133,9 +136,9 @@ private func Stun(object target)
 
 private func StickTo(object target)
 {
-	if (CanStickTo(target) && !GetEffect("StickToTarget", this))
+	if (CanStickTo(target) && !fx_stick)
 	{
-		CreateEffect(StickToTarget, 1, 1, target);
+		fx_stick = CreateEffect(StickToTarget, 1, 1, target);
 	}
 }
 
