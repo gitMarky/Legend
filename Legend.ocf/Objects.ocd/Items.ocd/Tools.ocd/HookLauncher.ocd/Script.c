@@ -73,8 +73,7 @@ public func FinishedAiming(object clonk, int angle)
 {
 	// Shoot the hook and detach the mesh from the bow.
 	EnsureHook();
-	hook->Exit();
-	hook->Launch(angle, 80, 100, clonk, this);
+	hook->Launch(angle, 110, 150, clonk, this);
 	hook_attach = nil;
 	DetachMesh(hook_attach);
 	Sound("Objects::Weapons::Bow::Shoot?");
