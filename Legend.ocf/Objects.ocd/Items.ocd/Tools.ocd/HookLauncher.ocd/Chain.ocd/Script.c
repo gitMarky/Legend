@@ -80,7 +80,7 @@ local FxDrawIn = new Effect
 
 		var vel_me = +velocity / mass_me;
 	
-		if (IsImmobile(pull_me))
+		if (IsImmobile(pull_me) || pull_me->~IsHookPullTarget()) // pull the launcher towards the hook?
 		{
 			vel_me = 0;
 		}
