@@ -13,10 +13,10 @@ func Initialize()
 		AimMode        = AIM_Position,
 		AnimationAim   = "CrossbowAimArms",
 		AnimationShoot = nil,
-		ShootTime      = 20,
+		ShootTime      = 30,
 		TurnType       = 1,
-		WalkSpeed      = 84,
-		WalkBack       = 56,
+		WalkSpeed      = 10,
+		WalkBack       = 10,
 		AimSpeed       = 20,
 	};
 	OnChainBreak();
@@ -113,25 +113,23 @@ public func RejectUse(object clonk)
 
 public func ControlUseStart(object clonk, int x, int y)
 {
-	// Cut chain, or otherwise remove helper object.
-	EnsureHook();
-
-/*
-	if (hook->Contained() != this)
+	// retrieve old hook
+	if (hook)
 	{
-		var chain = hook->GetChain();
-		if (chain)
+		if (hook->GetChain())
 		{
-			Log("ControlUseStart->DrawIn");
-			chain->DrawIn();
+			hook->DrawChainIn();
 			return true;
 		}
 		else
 		{
-			hook->Enter(this);
+			hook->RemoveObject();
 		}
 	}
-*/
+
+	// Cut chain, or otherwise remove helper object.
+	EnsureHook();
+	
 	// Start aiming.
 	is_aiming = true;
 	ControlUseHolding(clonk, x, y);
