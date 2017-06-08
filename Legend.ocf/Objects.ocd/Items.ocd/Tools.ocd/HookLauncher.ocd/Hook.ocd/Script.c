@@ -70,12 +70,7 @@ public func Hit()
 	{
 		Sound("Objects::Arrow::HitGround");
 	}
-	if (chain)
-	{
-		chain->DrawIn();
-	}
-	RemoveEffect(nil, this, fx_flight);
-	RemoveEffect("HitCheck", this);
+	DrawChainIn();
 }
 
 
@@ -83,16 +78,10 @@ public func HitObject(object target)
 {
 	if (target == user) return;
 
-	RemoveEffect(nil, this, fx_flight);
-	RemoveEffect("HitCheck", this);
-
 	StickTo(target);
 	Stun(target);
 
-	if (chain)
-	{
-		chain->DrawIn();
-	}
+	DrawChainIn();
 }
 
 
@@ -114,6 +103,16 @@ public func OnChainBreak()
 
 
 /*-- Internals --*/
+
+private func DrawChainIn()
+{
+	if (chain)
+	{
+		chain->DrawIn();
+	}
+	RemoveEffect(nil, this, fx_flight);
+	RemoveEffect("HitCheck", this);
+}
 
 private func Stun(object target)
 {
@@ -173,10 +172,7 @@ local InFlight = new Effect
 		if (this.reach <= distance)
 		{
 			Target->SetSpeed();
-			if (Target.chain)
-			{
-				Target.chain->DrawIn();
-			}
+			Target->DrawChainIn();
 			return FX_Execute_Kill;
 		}
 		else
