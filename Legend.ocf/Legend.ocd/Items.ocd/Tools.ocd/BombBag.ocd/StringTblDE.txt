@@ -1,0 +1,2 @@
+Name=Bombentasche
+Description=Kann mehrere Bomben aufnehmen

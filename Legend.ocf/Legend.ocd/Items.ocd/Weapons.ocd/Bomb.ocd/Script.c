@@ -1,4 +1,5 @@
 #include Library_CarryHeavy
+#include Library_Stackable
 
 /*-- Carry heavy stuff --*/
 
@@ -105,12 +106,28 @@ public func Detonate()
 	Explode(30, false, this->GetWeaponDamageAmount());
 }
 
+/*-- Stacking --*/
+
+public func IsStackable(){ return ; }
+public func MaxStackCount()
+{
+	if (Contained() && Contained()->~IsBombBag())
+	{
+		return Contained()->BombCapacity();
+	}
+	else
+	{
+		return 1;
+	}
+}
+
 
 /*-- Weapon Properties --*/
 
 public func IsWeapon() { return true; }
 public func GetWeaponDamageAmount(){ return 8; }
 
+public func IsBomb(){ return true; }
 
 /*-- Properties --*/
 

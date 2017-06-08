@@ -1,0 +1,2 @@
+Name=Bomb bag
+Description=Carries several bombs
