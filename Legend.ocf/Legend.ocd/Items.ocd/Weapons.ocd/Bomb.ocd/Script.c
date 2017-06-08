@@ -111,7 +111,7 @@ public func Detonate()
 public func IsStackable(){ return ; }
 public func MaxStackCount()
 {
-	if (Contained() && Contained()->~IsBombBag())
+	if (GetType() == C4V_C4Object && Contained() && Contained()->~IsBombBag())
 	{
 		return Contained()->BombCapacity();
 	}
