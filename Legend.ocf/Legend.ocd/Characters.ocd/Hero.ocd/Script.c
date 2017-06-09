@@ -1,5 +1,6 @@
 #include Clonk
 #include Library_DamageDisplay
+#include Library_FallingDamage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8,7 +9,7 @@
 
 local MaxEnergy = 12000;
 
-local FallSpeedFear = 80;
+local FallSpeedFear = 100;
 
 
 func SetSkin(int new_skin)

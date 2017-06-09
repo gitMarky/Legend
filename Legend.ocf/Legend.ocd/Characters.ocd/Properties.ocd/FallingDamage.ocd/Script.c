@@ -39,8 +39,13 @@ local FxFallingDamage = new Effect
 		if (this.remaining_damage > 0)
 		{
 			var damage = Min(this.remaining_damage, 2);
-			this.remaining_damage -= damage;			
-			this.Target->DoEnergy(-damage);
+			this.remaining_damage -= damage;	
+			
+			this.Target->DoDamage(damage);
+
+			if (this.Target->GetAlive())
+				this.Target->DoEnergy(-damage);
+
 			return FX_OK;
 		}
 		else
