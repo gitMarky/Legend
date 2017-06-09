@@ -13,7 +13,7 @@ func DoRoll()
 	
 	if (falling_damage)
 	{
-		falling_damage.remaining_damage -= falling_damage.remaining_damage / 2;
+		falling_damage.remaining_damage /= 2;
 	}
 
 	_inherited(...);
@@ -25,7 +25,7 @@ local FxFallingDamage = new Effect
 	Construction = func (int speed_x, int speed_y)
 	{
 		var velocity = Distance(speed_x, speed_y);
-		this.total_damage = Max(0, velocity / 4 - 10);
+		this.total_damage = Max(0, velocity / 4 - 12);
 
 		if (this.total_damage > 0)
 		{

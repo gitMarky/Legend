@@ -87,6 +87,6 @@ global func DamageFlash(int amount)
 	
 	var damage = GetEffect("FxDamageFlash", this) ?? CreateEffect(FxDamageFlash, 1, 1);
 	damage.Time = 0;
-	damage.Amount = Max(damage.Amount, amount);
+	damage.Amount = Max(damage.Amount, amount ?? 1);
 }
 

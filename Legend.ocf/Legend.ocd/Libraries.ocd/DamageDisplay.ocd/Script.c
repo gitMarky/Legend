@@ -8,3 +8,10 @@ public func Damage(int change, int cause, int by_player)
 		DamageFlash(change);
 	}
 }
+
+
+public func CatchBlow()
+{
+	DamageFlash();
+	_inherited();
+}
