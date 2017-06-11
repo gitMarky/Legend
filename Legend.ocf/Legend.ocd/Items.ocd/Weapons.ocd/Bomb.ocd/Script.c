@@ -7,15 +7,17 @@ public func GetCarryTransform(clonk)
 {
 	if (GetCarrySpecial(clonk))
 	{
-		return Trans_Translate(1000, -6500, 0);
+		return Trans_Identity();
 	}
 	else
 	{
-		return Trans_Mul(Trans_Translate(1500, 0, -1500), Trans_Rotate(180, 1, 0, 0));
+		return Trans_Rotate(90, 0, 0, 1);
 	}
 }
 
-public func GetCarryPhase() { return 900; }
+public func GetCarryBone() { return "Base"; }
+
+public func GetCarryPhase() { return 500; }
 
 
 /*-- Engine Callbacks --*/
@@ -70,8 +72,14 @@ local FxBombFuse = new Effect
 			}
 			
 			// fuse effect
-			var x = +Sin(Target->GetR(), 5);
-			var y = -Cos(Target->GetR(), 5);
+			var fuse_length = 5 - 2 * time / this.fuse;
+			var x = +Sin(Target->GetR(), fuse_length);
+			var y = -Cos(Target->GetR(), fuse_length);
+			
+			if (Target->Contained())
+			{
+				x += -4 + 8 * Target->Contained()->GetDir();
+			}
 
 			if (time < this.fuse - 20)
 			{
