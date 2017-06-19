@@ -1,0 +1,2 @@
+Name=Bottle
+Description=You got an empty bottle! Use it to store all kinds of things.

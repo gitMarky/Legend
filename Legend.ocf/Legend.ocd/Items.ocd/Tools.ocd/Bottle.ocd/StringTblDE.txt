@@ -1,0 +1,2 @@
+Name=Flasche
+Description=In diese praktische Flasche kann man vieles tun. Sie leer zu lassen wäre Verschwendung!
