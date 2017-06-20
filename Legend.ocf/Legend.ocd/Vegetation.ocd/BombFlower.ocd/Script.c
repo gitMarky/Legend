@@ -9,6 +9,15 @@ private func Construction()
 	GrowFruit(true);
 	SetSeedChance(0);
 	SetSeedAmount(0);
+	
+	// rotate
+	this.MeshTransformation = Trans_Rotate(RandomX(0, 359), 0, 1, 0);
+	
+	// random leaf transformations
+	TransformLeaf("Leaf1", RandomX(-40, +40), RandomX(-10, +10), RandomX(-30, +10));
+	TransformLeaf("Leaf3", RandomX(-40, +40), RandomX(-10, +10), RandomX(-10, +30));
+	TransformLeaf("Leaf2", RandomX(-30, +10), RandomX(-10, +10), RandomX(-40, +40));
+	TransformLeaf("Leaf4", RandomX(-10, +30), RandomX(-10, +10), RandomX(-40, +40));
 }
 
 
@@ -108,6 +117,14 @@ local FxGrowFruit = new Effect
 		return FX_Execute_Kill;
 	},
 };
+
+/* -- Graphics -- */
+
+
+private func TransformLeaf(string bone, int x, int y, int z)
+{
+	TransformBone(bone, Trans_Mul(Trans_Rotate(x, 1, 0, 0), Trans_Rotate(y, 0, 1, 0), Trans_Rotate(z, 0, 0, 1)), 1, Anim_Const(1000));
+}
 
 
 /*-- Properties --*/
