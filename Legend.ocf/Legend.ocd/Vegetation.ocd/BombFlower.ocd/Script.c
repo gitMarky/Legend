@@ -5,13 +5,15 @@ local fruit;
 
 private func Construction()
 {
+	_inherited();
+
 	fruit = { item = nil, mesh = nil};
 	GrowFruit(true);
 	SetSeedChance(0);
 	SetSeedAmount(0);
 	
 	// rotate
-	this.MeshTransformation = Trans_Rotate(RandomX(0, 359), 0, 1, 0);
+	this.MeshTransformation = Trans_Mul(Trans_Rotate(RandomX(0, 359), 0, 1, 0), Trans_Rotate(RandomX(-5, +5), 0, 0, 1));
 	
 	// random leaf transformations
 	TransformLeaf("Leaf1", RandomX(-40, +40), RandomX(-10, +10), RandomX(-30, +10));
@@ -128,6 +130,18 @@ private func TransformLeaf(string bone, int x, int y, int z)
 
 
 /*-- Properties --*/
+
+public func Place(int amount, proplist area, proplist settings)
+{
+	var placed = inherited(amount, area, settings);
+	
+	for (var plant in placed)
+	{
+		plant->RootSurface(30);
+	}
+
+	return placed;
+}
 
 local Collectible = true;
 local Name = "$Name$";
