@@ -1,7 +1,7 @@
 [DefCore]
 id=BombFlower
 Version=8,0
-Category=C4D_Object
+Category=C4D_StaticBack
 Width=6
 Height=6
 Offset=-3,-3
