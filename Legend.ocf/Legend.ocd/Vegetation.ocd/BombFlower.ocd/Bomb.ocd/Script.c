@@ -1,145 +1,77 @@
-#include Library_CarryHeavy
-#include Library_Stackable
-
-/*-- Carry heavy stuff --*/
-
-public func GetCarryTransform(clonk)
-{
-	if (GetCarrySpecial(clonk))
-	{
-		return Trans_Identity();
-	}
-	else
-	{
-		return Trans_Rotate(90, 0, 0, 1);
-	}
-}
-
-public func GetCarryBone() { return "Base"; }
-
-public func GetCarryPhase() { return 500; }
-
-
-/*-- Engine Callbacks --*/
-
-public func Hit(int x, int y)
-{
-	StonyObjectHit(x,y);
-}
-
+#include Weapon_Bomb
 
 /*-- Usage --*/
 
 public func ControlUse(object clonk, int x, int y)
 {
-	Fuse();
+	StartRoll(clonk);
 	return true;
+}
+
+
+/*-- Engine Callbacks --*/
+
+public func Hit2(int x, int y)
+{
+	// explode if velocity is greater than 30
+	if (Distance(x, y) >= 300)
+	{
+		Detonate();
+	}
 }
 
 
 /*-- Mechanism --*/
 
-local FuseTime = 140;
-
-local FxBombFuse = new Effect
+local FxBombRoll = new Effect
 {
-	Construction = func (int fuse)
+	Construction = func ()
 	{
-		this.fuse = fuse;
+		this.angle = 0;
+		this.tilt = RandomX(-3, -1) * 20;
+	},
+
+	Timer = func ()
+	{
+		var circumference = 314 * Target->GetDefHeight();
+		this.angle += Target->GetXDir(100) * 360 / circumference;
+
+		UpdateRotation();
+		return FX_OK;
 	},
 	
-	Timer = func (int time)
+	UpdateRotation = func ()
 	{
-		if (time > this.fuse)
-		{
-			Target->Detonate();
-			return FX_Execute_Kill;
-		}
-		else
-		{
-			// countdown flash effect
-			var flash_interval = 15;
-			var remaining = this.fuse - time;
-
-			if (remaining < this.fuse / 2)
-			{
-				flash_interval = 7;
-			}
-			
-			if (time % flash_interval == 0)
-			{
-				Target->Flash(RGB(255, 0, 0), 2 * flash_interval / 3);
-			}
-			
-			// fuse effect
-			var fuse_length = 5 - 2 * time / this.fuse;
-			var x = +Sin(Target->GetR(), fuse_length);
-			var y = -Cos(Target->GetR(), fuse_length);
-			
-			if (Target->Contained())
-			{
-				x += -4 + 8 * Target->Contained()->GetDir();
-			}
-
-			if (time < this.fuse - 20)
-			{
-				Target->CreateParticle("Fire", x, y, PV_Random(x - 5, x + 5), PV_Random(y - 15, y - 5), PV_Random(10, 20), Particles_Glimmer(), 3);
-			}
-
-			return FX_OK;
-		}
+		Target->SetR();
+		Target.MeshTransformation = Trans_Mul(Trans_Rotate(this.angle, 0, 0, 1), Trans_Rotate(this.tilt, 1, 0, 0));
 	},
 };
 
 
-public func IsFusing()
+public func StartRoll(object clonk)
 {
-	return GetEffect("FxBombFuse", this);
+	this->Exit(5 * clonk->GetCalcDir(), 7);
+	this->SetXDir(clonk->GetXDir() + 20 * clonk->GetCalcDir());
+	this->SetYDir(clonk->GetYDir());
+	this->Roll();
 }
 
 
-public func Fuse()
+public func IsRolling()
 {
-	if (!IsFusing())
+	return GetEffect("FxBombRoll", this);
+}
+
+
+public func Roll()
+{
+	if (!IsRolling())
 	{
-		Sound("Fire::Fuse");
-		Sound("Fire::FuseLoop", nil, nil, nil, +1);
-		CreateEffect(FxBombFuse, 1, 1, FuseTime);		
+		CreateEffect(FxBombRoll, 1, 1);		
 	}
 }
-
-
-public func Detonate()
-{
-	Explode(30, false, this->GetWeaponDamageAmount());
-}
-
-/*-- Stacking --*/
-
-public func IsStackable(){ return ; }
-public func MaxStackCount()
-{
-	if (GetType() == C4V_C4Object && Contained() && Contained()->~IsBombBag())
-	{
-		return Contained()->BombCapacity();
-	}
-	else
-	{
-		return 1;
-	}
-}
-
-
-/*-- Weapon Properties --*/
-
-public func IsWeapon() { return true; }
-public func GetWeaponDamageAmount(){ return 8; }
-
-public func IsBomb(){ return true; }
 
 /*-- Properties --*/
-
-public func IsExplosive() { return true; }
 
 local Collectible = true;
 local Name = "$Name$";
