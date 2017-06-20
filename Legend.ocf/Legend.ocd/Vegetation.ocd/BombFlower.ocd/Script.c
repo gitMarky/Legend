@@ -48,18 +48,21 @@ public func GrowFruit(bool fullgrown)
 
 public func PickFruit(object user)
 {
-	AssertNotNil(user);
-
 	if (fruit.mesh)
 	{
 		DetachMesh(fruit.mesh);
 		fruit.mesh = nil;
 	}
 
+	var picked = fruit.item;
 	if (fruit.item)
 	{
 		fruit.item->Exit();
-		user->Collect(fruit.item);
+		
+		if (user)
+		{
+			user->Collect(fruit.item);
+		}
 		
 		fruit.item = nil;
 		this.Collectible = false; // collectible only while there is fruit
@@ -67,6 +70,8 @@ public func PickFruit(object user)
 	
 	RemoveEffect("FxGrowFruit", this);
 	CreateEffect(FxGrowFruit, 1, 200);
+	
+	return picked;
 }
 
 
@@ -113,7 +118,7 @@ local FxGrowthMonitor = new Effect
 
 local FxGrowFruit = new Effect
 {
-	Timer = func()
+	Timer = func(int time)
 	{
 		Target->GrowFruit();
 		return FX_Execute_Kill;
@@ -128,8 +133,90 @@ private func TransformLeaf(string bone, int x, int y, int z)
 	TransformBone(bone, Trans_Mul(Trans_Rotate(x, 1, 0, 0), Trans_Rotate(y, 0, 1, 0), Trans_Rotate(z, 0, 0, 1)), 1, Anim_Const(1000));
 }
 
+/* -- Damage -- */
 
-/*-- Properties --*/
+public func CanBeHitByShockwaves() { return true; }
+public func DoShockwaveCheck(int x, int y, int cause_plr)
+{
+	if (GetEffect("FxDestroy", this))
+	{
+		return _inherited(x, y, cause_plr);
+	}
+	else
+	{
+		return true;
+	}
+}
+
+public func OnShockwaveHit()
+{
+	if (!GetEffect("FxDestroy", this))
+	{
+		CreateEffect(FxDestroy, 1, 1);
+	}
+	return false;
+}
+
+local FxDestroy = new Effect
+{
+	Construction = func ()
+	{
+		// make movable but invisible
+		Target->SetCategory(C4D_Vehicle); 
+		this.vis = Target.Visibility;
+		Target->CreateParticle("Grass", 0, 0, PV_Random(-20, 20), PV_Random(-20, 10), PV_Random(30, 100), Particles_Straw(), 30);
+		Target.Visibility = VIS_Editor;
+		Target->SetObjectBlitMode(GFX_BLIT_Additive);
+
+		// launch the fruit
+		this.picked = Target->PickFruit();
+		if (this.picked && this.picked->GetCon() < 100)
+		{
+			this.picked->RemoveObject();
+		}
+	},
+
+	Timer = func (int time)
+	{
+		// launch previous bomb in same direction as myself
+		if (time == 1)
+		{
+			if (this.picked)
+			{
+				var precision = 1000;
+				this.picked->SetXDir(Target->GetXDir(precision), precision);
+				this.picked->SetYDir(Target->GetYDir(precision), precision);
+			}
+			
+			Target->SetXDir();
+			Target->SetYDir();
+		}
+		
+		// reset growth timer
+		var grow = GetEffect("FxGrowFruit", Target);
+		if (grow)
+		{
+			grow.Time = 0;
+		}
+		
+		// check for movement
+		if (!Target->GetXDir() && ! Target->GetYDir())
+		{
+			++this.no_motion;
+		}
+		
+		if (this.no_motion >= 60)
+		{
+			Target.Visibility = this.vis;
+			Target->SetCategory(C4D_StaticBack);
+			Target->SetObjectBlitMode(nil);
+			Target->FadeIn(60);
+			return FX_Execute_Kill;
+		}
+	},	
+};
+
+/* -- Properties -- */
 
 public func Place(int amount, proplist area, proplist settings)
 {
