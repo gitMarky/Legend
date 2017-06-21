@@ -6,3 +6,30 @@
 
 
 public func IsBottleItem() { return true; }
+
+local bottle_mesh;
+
+public func Construction()
+{
+	_inherited();
+	
+	if (HasBottleMesh())
+	{
+		bottle_mesh = CreateObject(Dummy);
+		bottle_mesh->SetPosition(0, 0);
+		bottle_mesh->SetObjectLayer(bottle_mesh);
+		bottle_mesh->SetGraphics(nil, HasBottleMesh());
+	}
+}
+
+
+public func Destruction()
+{
+	_inherited();
+	
+	if (bottle_mesh) bottle_mesh->RemoveObject();
+}
+
+
+public func HasBottleMesh() { return nil; }
+public func GetBottleMesh() { return bottle_mesh; }

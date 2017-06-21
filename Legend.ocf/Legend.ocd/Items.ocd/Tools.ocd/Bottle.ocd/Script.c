@@ -90,6 +90,36 @@ public func CanCollectLiquid(object item)
 }
 
 
+public func Collection2(object item)
+{
+	UpdateBottleContents();
+	return _inherited(item, ...);
+}
+
+
+public func Ejection(object item)
+{
+	UpdateBottleContents();
+	return _inherited(item, ...);
+}
+
+
+public func RemoveLiquid(liquid_name, int amount, object destination)
+{
+	var result = _inherited(liquid_name, amount, destination, ...);
+	UpdateBottleContents();
+	return result;
+}
+
+
+public func PutLiquid(liquid_name, int amount, object source)
+{
+	var result = _inherited(liquid_name, amount, source, ...);
+	UpdateBottleContents();
+	return result;
+}
+
+
 /* -- Display -- */
 
 public func GetCarryBone()
@@ -121,9 +151,37 @@ private func Definition(proplist def)
 	def.PictureTransformation = Trans_Mul(Trans_Rotate(280, 0, 1, 0), Trans_Rotate(20, 0, 0, 1), Trans_Rotate(5, 1, 0, 0), Trans_Translate(0, 0, 250));
 }
 
+
+private func UpdateBottleContents()
+{
+	if (Contents())
+	{
+		var mesh = Contents()->GetBottleMesh();
+		if (mesh)
+		{
+			if (!bottle_attach_number)
+			{
+				bottle_attach_number = AttachMesh(mesh, this->GetCarryBone(), "Base", Trans_Identity());
+			}
+	
+			Contents()->UpdateBottleMesh(this, bottle_attach_number);
+		}
+	}
+	else
+	{
+		if (bottle_attach_number)
+		{
+			DetachMesh(bottle_attach_number);
+			bottle_attach_number = nil;
+		}
+	}
+}
+
 /* -- Properties -- */
 
 
 local Name = "$Name$";
 local Description = "$Description$";
 local Collectible = true;
+
+local bottle_attach_number; // attached mesh
