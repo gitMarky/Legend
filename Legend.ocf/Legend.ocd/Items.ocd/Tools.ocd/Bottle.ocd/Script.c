@@ -17,15 +17,6 @@ func Hit()
 }
 
 
-func Hit2()
-{
-	// Cast some particles.
-		// TODO?
-	// Sound effects.
-	Sound("Hits::Materials::Glass::GlassBreak");
-	RemoveObject();
-}
-
 /* -- Usage -- */
 
 /* -- Collection -- */
