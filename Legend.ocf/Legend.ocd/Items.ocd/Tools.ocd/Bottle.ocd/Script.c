@@ -5,6 +5,9 @@
 	@author Marky
 */
 
+#include Library_LiquidContainer
+#include Library_HasExtraSlot
+
 
 /*-- Engine Callbacks --*/
 
@@ -24,6 +27,77 @@ func Hit2()
 }
 
 /* -- Usage -- */
+
+/* -- Collection -- */
+
+public func RejectCollect(id type, object item)
+{
+	if (item->~IsBottleItem() || CanCollectLiquid(item))
+	{
+		// Can only contain one object
+		return Contents();
+	}
+	else // Reject everything else
+	{
+		return true;
+	}
+}
+
+
+public func CollectFromStack(object item)
+{
+	// Callback from stackable object: Try grabbing partial objects from this stack, if the stack is too large
+	if (item->GetStackCount() > GetLiquidAmountRemaining() && !this->RejectStack(item))
+	{
+		// Get one sample object and try to insert it into the bottle
+		var candidate = item->TakeObject();
+		candidate->Enter(this);
+
+		// Put it back if it was not collected
+		if (candidate && !(candidate->Contained()))
+		{
+			item->TryAddToStack(candidate);
+		}
+	}
+}
+
+
+public func RejectStack(object item)
+{
+	// Callback from stackable object: When should a stack entrance be rejected, if the object was not merged into the existing stacks?
+	if (Contents())
+	{
+		// The bottle can hold only one type of liquid
+		return true;
+	}
+	if (CanCollectLiquid(item))
+	{
+		// The liquid is suitable, collect it!
+		return false;
+	}
+	else
+	{
+		// Reject anything else
+		return true;
+	}
+}
+
+
+
+public func GetLiquidContainerMaxFillLevel(liquid_name) { return 50; }
+
+
+public func IsLiquidContainerForMaterial(string liquid_name)
+{
+	return !!WildcardMatch("Water", liquid_name) || !!WildcardMatch("Oil", liquid_name);
+}
+
+
+public func CanCollectLiquid(object item)
+{
+	return item->~IsLiquid() && this->IsLiquidContainerForMaterial(item->~GetLiquidType());
+}
+
 
 /* -- Display -- */
 
