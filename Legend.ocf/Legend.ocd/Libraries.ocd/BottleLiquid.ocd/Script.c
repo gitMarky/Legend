@@ -17,6 +17,10 @@ public func UpdateBottleMesh(object bottle, int attach_number)
 	bottle->SetAttachTransform(attach_number, Trans_Mul(Trans_Scale(1000, fill_level, 1000), Trans_Translate(0, offset, 0)));
 
 	var color = GetAverageTextureColor(this->GetLiquidMaterial());
+	color = RGB2HSL(color);
+	var lightness = GetRGBaValue(color, RGBA_BLUE);
+	color = SetRGBaValue(color, BoundBy(lightness + 20, 0, 255), RGBA_BLUE);
+	color = HSL2RGB(color);
 	color = SetRGBaValue(color, 100, RGBA_ALPHA);
 
 	GetBottleMesh()->SetClrModulation(color);
