@@ -14,3 +14,4 @@ Mass=20
 NoMassFromContents=1
 Rotate=1
 StretchGrowth=1
+HideInCreator=true

@@ -1,0 +1,2 @@
+DE:Charaktere
+US:Characters

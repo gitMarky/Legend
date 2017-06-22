@@ -1,0 +1,2 @@
+DE:Eigenschaften
+US:Properties
