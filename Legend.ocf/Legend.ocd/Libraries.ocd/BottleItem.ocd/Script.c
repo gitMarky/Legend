@@ -27,9 +27,10 @@ public func Destruction()
 {
 	_inherited();
 	
+	// this is intentioannly not GetBottleMesh(), so that GetBottleMesh() can return the object itself.
 	if (bottle_mesh) bottle_mesh->RemoveObject();
 }
 
 
-public func HasBottleMesh() { return nil; }
+public func HasBottleMesh() { return nil; } // returns an ID for an external mesh, if the object for example, has sprite graphics usually
 public func GetBottleMesh() { return bottle_mesh; }

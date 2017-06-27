@@ -5,6 +5,7 @@
 	@author Marky
 */
 
+#include Library_MeleeWeapon
 #include Library_LiquidContainer
 #include Library_HasExtraSlot
 
@@ -18,6 +19,40 @@ func Hit()
 
 
 /* -- Usage -- */
+
+public func RejectUse(object clonk)
+{
+	return !(clonk->HasHandAction() && CanStrikeWithWeapon(clonk) && (clonk->IsWalking() || clonk->IsJumping()));
+}
+
+public func ControlUse(object clonk, int x, int y)
+{
+	if (IsEmpty())
+	{
+		StartCollection(clonk);
+		return true;
+	}
+	else
+	{
+		var item = Contents();
+		
+		if (item.ControlUse && item->ControlUse(clonk, x, y))
+		{
+			return true;
+		}
+		else if (item->~IsLiquid())
+		{
+			item->~Disperse(Angle(0, 0, x, y), 10);
+			return true;
+		}
+		else
+		{
+			item->Exit(7 * clonk->GetCalcDir());
+			return true;
+		}
+	}
+}
+
 
 /* -- Collection -- */
 
@@ -74,7 +109,6 @@ public func RejectStack(object item)
 }
 
 
-
 public func GetLiquidContainerMaxFillLevel(liquid_name) { return 50; }
 
 
@@ -120,6 +154,75 @@ public func PutLiquid(liquid_name, int amount, object source)
 }
 
 
+/* -- Internals -- */
+
+private func StartCollection(object clonk) // play collection animation
+{
+	var arm = "R";
+	if (clonk->GetHandPosByItemPos(clonk->GetItemPos(this)) == 1)
+	{
+		arm = "L";
+	}
+
+	var animation = Format("SwordSlash2.%s", arm);
+	var animlen = clonk->GetAnimationLength(animation);
+	var action_length = 20;
+
+	if (!GetEffect("BottleWeaponCooldown", clonk))
+	{
+		AddEffect("BottleWeaponCooldown", clonk, 2, action_length, this);
+	}
+
+	PlayWeaponAnimation(clonk, animation, 10, Anim_Linear(animlen, animlen, 0, action_length, ANIM_Remove), Anim_Const(1000));
+	clonk->UpdateAttach();
+	StartWeaponHitCheckEffect(clonk, action_length, 1);
+
+	this->Sound("Objects::Weapons::WeaponSwing?");
+}
+
+
+private func CheckStrike(int time) // try to collect items while the animation is running
+{
+	if (time < 10) return;
+
+	var offset_x = 7 * Contained()->GetCalcDir();
+	var offset_y = 5;
+
+	var width = 10;
+	var height = 20;
+	
+	if (IsEmpty())
+	{
+		for (var item in FindObjects(Find_AtRect(offset_x - width/2, offset_y - height/2, width, height),
+								     Find_NoContainer(),
+								     Find_Exclude(Contained()),
+								     Find_Func("IsBottleItem"),
+								     Find_Layer(GetObjectLayer())))
+		{
+			Collect(item, true);
+
+			if (!IsEmpty())
+			{
+				break;
+			}
+		}
+	}
+}
+
+
+private func WeaponStrikeExpired()
+{
+	if (GetEffect("BottleWeaponCooldown", Contained()))
+		RemoveEffect("BottleWeaponCooldown", Contained());
+}
+
+
+private func IsEmpty()
+{
+	return !Contents();
+}
+
+
 /* -- Display -- */
 
 public func GetCarryBone()
@@ -161,7 +264,7 @@ private func UpdateBottleContents()
 		{
 			if (!bottle_attach_number)
 			{
-				bottle_attach_number = AttachMesh(mesh, this->GetCarryBone(), "Base", Trans_Identity());
+				bottle_attach_number = AttachMesh(mesh, this->GetCarryBone(), mesh->~GetBottleBone() ?? "Base", Trans_Identity());
 			}
 	
 			Contents()->UpdateBottleMesh(this, bottle_attach_number);
