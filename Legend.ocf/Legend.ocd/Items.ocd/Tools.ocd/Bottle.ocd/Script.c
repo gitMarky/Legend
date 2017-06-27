@@ -164,7 +164,7 @@ private func StartCollection(object clonk) // play collection animation
 		arm = "L";
 	}
 
-	var animation = Format("SwordSlash2.%s", arm);
+	var animation = Format("BottleSwing.%s", arm);
 	var animlen = clonk->GetAnimationLength(animation);
 	var action_length = 20;
 
@@ -173,7 +173,7 @@ private func StartCollection(object clonk) // play collection animation
 		AddEffect("BottleWeaponCooldown", clonk, 2, action_length, this);
 	}
 
-	PlayWeaponAnimation(clonk, animation, 10, Anim_Linear(animlen, animlen, 0, action_length, ANIM_Remove), Anim_Const(1000));
+	PlayWeaponAnimation(clonk, animation, 10, Anim_Linear(0, 0, animlen, action_length, ANIM_Remove), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
 	clonk->UpdateAttach();
 	StartWeaponHitCheckEffect(clonk, action_length, 1);
 
