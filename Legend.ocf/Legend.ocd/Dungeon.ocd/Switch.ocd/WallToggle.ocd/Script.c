@@ -4,7 +4,7 @@
 
 
 // Getting hit toggles this switch, so it should be a target
-public func IsProjectileTarget(object projectile, object shooter){ return true; }
+public func IsProjectileTarget(object projectile, object shooter){ return !eye_closed; }
 
 // Getting hit toggles this switch
 public func OnProjectileHit(object projectile)
@@ -14,25 +14,15 @@ public func OnProjectileHit(object projectile)
 
 private func SetEyeClosed(bool state, object by_user)
 {
-	// Update graphics
-	var gfx;
-	if (state)
-	{
-		gfx = "closed";
-	}
-	else
-	{
-		gfx = "opened";
-	}
-	
-	UpdateGraphics(gfx);
+	eye_closed = state;
+	UpdateGraphics();
 
 	// Do the usual
 	if (state)
 	{
 		Sound("Switch::SwitchLockIn");
 	}
-	ScheduleCall(this, this.SetSwitchState, 25, nil, state, by_user);
+	ScheduleCall(this, this.SetSwitchState, 25, nil, eye_closed, by_user);
 }
 
 
@@ -45,9 +35,17 @@ public func SetSkin(string name)
 	UpdateGraphics();
 }
 
-private func UpdateGraphics(string gfx)
+private func UpdateGraphics()
 {
-	skin_gfx = gfx;
+	var gfx;
+	if (eye_closed)
+	{
+		gfx = "closed";
+	}
+	else
+	{
+		gfx = "opened";
+	}
 	var material = "SwitchEye_";
 	if (skin_name) material = Format("%s%s_", material, skin_name);
 	material = Format("%s%s", material, gfx);
@@ -60,7 +58,7 @@ private func UpdateGraphics(string gfx)
 local Name = "$Name$";
 local Description = "$Description$";
 local skin_name;
-local skin_gfx = "opened";
+local eye_closed = false;
 
 
 /*-- Saving --*/
@@ -68,7 +66,7 @@ local skin_gfx = "opened";
 public func SaveScenarioObject(proplist props)
 {
 	if (!inherited(props, ...)) return false;
-	if (skin_name) props->AddCall("Invert", this, "SetSkinName", skin_name);
+	if (skin_name) props->AddCall("Skin", this, "SetSkinName", skin_name);
 	return true;
 }
 
