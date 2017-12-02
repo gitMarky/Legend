@@ -28,7 +28,11 @@ private func SetEyeClosed(bool state, object by_user)
 	UpdateGraphics(gfx);
 
 	// Do the usual
-	SetSwitchState(state, by_user);
+	if (state)
+	{
+		Sound("Switch::SwitchLockIn");
+	}
+	ScheduleCall(this, this.SetSwitchState, 25, nil, state, by_user);
 }
 
 
