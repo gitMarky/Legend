@@ -1,0 +1,121 @@
+material SwitchEye
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            cull_hardware none
+
+            ambient 0.8 0.8 0.8 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.16 0.16 0.16 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit
+            {
+                texture eye.png
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material SwitchEye_opened
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            cull_hardware none
+
+            ambient 0.8 0.8 0.8 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.16 0.16 0.16 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit
+            {
+                texture eye_opened.png
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material SwitchEye_closed
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            cull_hardware none
+
+            ambient 0.8 0.8 0.8 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.16 0.16 0.16 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit
+            {
+                texture eye_closed.png
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material SwitchEye_gold_opened
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            cull_hardware none
+
+            ambient 0.8 0.8 0.8 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.16 0.16 0.16 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit
+            {
+                texture eye_gold_opened.png
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material SwitchEye_gold_closed
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            cull_hardware none
+
+            ambient 0.8 0.8 0.8 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.16 0.16 0.16 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit
+            {
+                texture eye_gold_closed.png
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+

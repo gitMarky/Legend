@@ -1,0 +1,6 @@
+Name=Augen-Schalter
+Description=Bedient verschiedene Dinge.
+SwitchOpen=Schalter offen
+SwitchClosed=Schalter geschlossen
+ActionOpen=Aktion offen
+ActionClose=Aktion geschlossen

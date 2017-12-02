@@ -1,0 +1,6 @@
+Name=Eye switch
+Description=Operates various things.
+SwitchOpen=Switch open
+SwitchClosed=Switch closed
+ActionOpen=Action on open
+ActionClose=Action on close
